@@ -4,10 +4,13 @@ PHI columns use TypeDecorators from US-007 (AES-256-GCM encryption).
 DR-002: PHI fields encrypted at rest.
 DR-005: Soft deletes — `deleted_at` via SoftDeleteMixin.
 DR-020: MRN deduplication via unique constraint on deterministic ciphertext.
+US-019: Patient identity resolution metadata (resolution method, partial match tracking).
 """
 from __future__ import annotations
 
+import enum
 import uuid
+from datetime import datetime
 from typing import TYPE_CHECKING
 
 import sqlalchemy as sa
@@ -19,6 +22,30 @@ from app.db.mixins import SoftDeleteMixin, TimestampMixin
 
 if TYPE_CHECKING:
     from app.models.encounter import Encounter
+
+
+class ResolutionMethod(str, enum.Enum):
+    """Method used to resolve patient identity (US-019).
+    
+    MRN: Patient was resolved via Medical Record Number primary lookup
+    NAME_DOB: Patient was resolved via name + date of birth fallback
+    UNRESOLVED: Patient identity could not be resolved
+    """
+    MRN = "MRN"
+    NAME_DOB = "NAME_DOB"
+    UNRESOLVED = "UNRESOLVED"
+
+
+class PatientResolutionStatus(str, enum.Enum):
+    """Status of patient identity resolution (US-019).
+    
+    RESOLVED: Single patient match found and confirmed
+    AMBIGUOUS: Multiple patients matched criteria (requires manual resolution)
+    UNRESOLVED: No patients matched criteria
+    """
+    RESOLVED = "RESOLVED"
+    AMBIGUOUS = "AMBIGUOUS"
+    UNRESOLVED = "UNRESOLVED"
 
 
 class Patient(Base, TimestampMixin, SoftDeleteMixin):
@@ -63,6 +90,25 @@ class Patient(Base, TimestampMixin, SoftDeleteMixin):
         nullable=False,
         server_default="en",
         comment="IETF BCP 47 language tag (e.g., en, es, fr) for document generation",
+    )
+
+    # US-019: Patient identity resolution metadata
+    resolution_method: Mapped[str] = mapped_column(
+        sa.String(16),
+        nullable=False,
+        server_default=ResolutionMethod.MRN.value,
+        comment="Method used to resolve patient identity: MRN, NAME_DOB, or UNRESOLVED (US-019)",
+    )
+    partial_match: Mapped[bool] = mapped_column(
+        sa.Boolean,
+        nullable=False,
+        server_default=sa.text("FALSE"),
+        comment="True if patient was resolved via fallback method (name+DOB) (US-019)",
+    )
+    resolved_at: Mapped[datetime | None] = mapped_column(
+        sa.DateTime(timezone=True),
+        nullable=True,
+        comment="Timestamp when patient identity was resolved (US-019)",
     )
 
     # Relationships

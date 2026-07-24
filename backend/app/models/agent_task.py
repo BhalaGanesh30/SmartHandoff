@@ -25,11 +25,15 @@ class AgentTaskStatus(str, enum.Enum):
 
     Terminal statuses (COMPLETED, CANCELLED, FAILED) are never overwritten
     by bulk cancellation operations (US-015).
+    
+    US-019: BLOCKED status indicates task cannot proceed due to patient
+    resolution issues (ambiguous or unresolved patient identity).
     """
 
     QUEUED           = "queued"
     PENDING          = "pending"
     IN_PROGRESS      = "running"
+    BLOCKED          = "blocked"     # US-019: patient resolution issue
     COMPLETED        = "completed"
     FAILED           = "failed"
     PENDING_APPROVAL = "pending_approval"
@@ -76,7 +80,14 @@ class AgentTask(Base, TimestampMixin):
         sa.String(32),
         nullable=False,
         server_default="queued",
-        comment="One of: queued, running, completed, failed, pending_approval",
+        comment="One of: queued, pending, running, blocked, completed, failed, pending_approval, cancelled",
+    )
+
+    # US-019: Reason task is blocked (e.g., patient identity unresolved)
+    blocked_reason: Mapped[str | None] = mapped_column(
+        sa.String,
+        nullable=True,
+        comment="Reason task is blocked (e.g., patient identity ambiguous or unresolved) - US-019",
     )
 
     started_at: Mapped[datetime | None] = mapped_column(

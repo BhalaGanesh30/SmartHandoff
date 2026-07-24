@@ -3,6 +3,7 @@ sqlalchemy>=2.0.0
 asyncpg>=0.29.0
 cryptography>=42.0.0
 google-cloud-secret-manager>=2.20.0
+google-cloud-pubsub>=2.18.0
 fastapi>=0.111.0
 
 # --- Authentication & JWT (US-056) ---
@@ -16,3 +17,9 @@ PyYAML>=6.0.1
 
 # --- Redis / JWT blocklist (US-059) ---
 redis[hiredis]>=5.0.0
+
+# --- FHIR R4 resource models (US-017) ---
+fhir.resources>=7.1.0
+
+# --- Prometheus metrics (US-018) ---
+prometheus_client>=0.20.0

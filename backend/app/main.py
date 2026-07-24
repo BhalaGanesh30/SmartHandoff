@@ -9,6 +9,8 @@ from __future__ import annotations
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
+from fastapi.responses import Response
+from prometheus_client import CONTENT_TYPE_LATEST, generate_latest
 
 # US-058: register PHI logging filter before any other import emits a log
 from app.core.logging_config import configure_logging
@@ -77,4 +79,22 @@ app.include_router(tasks_router, prefix="/api/v1")
 app.include_router(admin_audit_router, prefix="/api/v1")
 app.include_router(admin_users_router, prefix="/api/v1")
 app.include_router(scim_router, prefix="/api/v1")
+
+
+# ── Prometheus Metrics Endpoint ──────────────────────────────────────────────
+@app.get("/metrics")
+async def metrics():
+    """Prometheus metrics endpoint (scraped by Cloud Monitoring).
+    
+    Exposes FHIR resilience metrics:
+    - fhir_circuit_state: Circuit breaker state
+    - fhir_retry_total: Retry outcomes
+    - fhir_rate_limited_total: Rate limit backoffs
+    - fhir_fetch_duration_seconds: Fetch latency histogram
+    
+    Design refs:
+        US-018 DoD — Prometheus metrics requirement
+        TR-016 — Observability / metrics
+    """
+    return Response(content=generate_latest(), media_type=CONTENT_TYPE_LATEST)
 
