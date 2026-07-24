@@ -32,3 +32,18 @@ output "notification_subscription_id" {
   description = "Subscription ID for the notification service consumer"
   value       = google_pubsub_subscription.notification_sub.id
 }
+
+output "coordinator_sub_id" {
+  description = "Full resource ID of the coordinator-sub Pub/Sub subscription"
+  value       = google_pubsub_subscription.coordinator_sub.id
+}
+
+output "coordinator_dlq_topic_id" {
+  description = "Full resource ID of the coordinator-dlq dead-letter topic"
+  value       = google_pubsub_topic.coordinator_dlq.id
+}
+
+output "coordinator_dlq_sub_id" {
+  description = "Full resource ID of the coordinator-dlq-sub pull subscription"
+  value       = google_pubsub_subscription.coordinator_dlq_sub.id
+}

@@ -120,7 +120,7 @@ class Patient(Base, TimestampMixin, SoftDeleteMixin):
 
     __table_args__ = (
         sa.Index("ix_patient_mrn_encrypted", "mrn_encrypted", unique=True),
-        sa.Index("ix_patient_deleted_at", "deleted_at"),
+        # Note: ix_patient_deleted_at is already created by SoftDeleteMixin (index=True)
     )
 
     def __repr__(self) -> str:

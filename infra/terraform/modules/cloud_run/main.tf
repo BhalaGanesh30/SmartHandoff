@@ -206,6 +206,11 @@ resource "google_cloud_run_v2_service" "services" {
   template {
     service_account = google_service_account.cloud_run_sa[each.key].email
 
+    # US-022: WebSocket connections (SignalR) require extended timeout.
+    # api-gateway needs 3600s for long-lived SignalR WebSocket connections.
+    # Other services use default 300s timeout (sufficient for HTTP/gRPC).
+    timeout = each.key == "api-gateway" ? "3600s" : "300s"
+
     scaling {
       min_instance_count = each.value.min
       max_instance_count = each.value.max

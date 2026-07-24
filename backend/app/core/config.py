@@ -132,6 +132,28 @@ class Settings:
             )
         return value
 
+    # --- Azure SignalR Service (US-022) ---
+
+    @property
+    def AZURE_SIGNALR_CONNECTION_STRING(self) -> str:
+        """Azure SignalR Service connection string.
+
+        Format: Endpoint=https://<name>.service.signalr.net;AccessKey=<key>;Version=1.0
+        Sourced from GCP Secret Manager via environment variable injection at Cloud Run startup.
+
+        Used for real-time task status broadcasts to Angular dashboard clients.
+
+        Raises:
+            RuntimeError: If AZURE_SIGNALR_CONNECTION_STRING is not set.
+        """
+        value = os.environ.get("AZURE_SIGNALR_CONNECTION_STRING", "")
+        if not value:
+            raise RuntimeError(
+                "AZURE_SIGNALR_CONNECTION_STRING environment variable is not set. "
+                "Mount it from GCP Secret Manager 'azure-signalr-connection-string'."
+            )
+        return value
+
 
 @lru_cache(maxsize=1)
 def get_settings() -> Settings:

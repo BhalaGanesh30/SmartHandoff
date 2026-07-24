@@ -19,6 +19,7 @@ configure_logging()
 from app.api.v1.routers.auth import router as auth_router
 from app.api.v1.routers.patients import router as patients_router
 from app.api.v1.routers.encounters import router as encounters_router
+from app.api.v1.routers.encounter_tasks import router as encounter_tasks_router
 from app.api.v1.routers.documents import router as documents_router
 from app.api.v1.routers.medications import router as medications_router
 from app.api.v1.routers.alerts import router as alerts_router
@@ -28,7 +29,11 @@ from app.api.v1.routers.tasks import router as tasks_router
 from app.api.v1.routers.admin.audit import router as admin_audit_router
 from app.api.v1.routers.admin.users import router as admin_users_router
 from app.api.v1.admin.scim.router import router as scim_router
+from app.api.v1.routers.signalr_hub import router as signalr_router, set_signalr_broadcaster
+from app.api.v1.routers.signalr_negotiate import router as negotiate_router
 from app.core.auth.rbac_validator import validate_rbac_config
+from app.core.config import get_settings
+from app.signalr.broadcaster import SignalRBroadcaster
 from app.db.encryption_key import get_phi_encryption_key
 from app.db.session import create_db_engines, dispose_db_engines
 from app.middleware.audit import HIPAAAuditMiddleware
@@ -45,9 +50,15 @@ async def lifespan(app: FastAPI):
     get_phi_encryption_key()
     # 3. Warm write + read DB connection pools (PgBouncer → primary + direct replica).
     create_db_engines()
+    # 4. Initialize SignalR broadcaster (US-022)
+    settings = get_settings()
+    broadcaster = SignalRBroadcaster(settings.AZURE_SIGNALR_CONNECTION_STRING)
+    set_signalr_broadcaster(broadcaster)
     yield
     # Shutdown: drain DB connections gracefully before Cloud Run SIGTERM timeout (30s).
     await dispose_db_engines()
+    # Shutdown: close SignalR broadcaster HTTP client
+    await broadcaster.aclose()
 
 
 app = FastAPI(
@@ -70,6 +81,7 @@ app.include_router(auth_router, prefix="/api/v1")
 # ── Protected routers (JWT + RBAC required) ───────────────────────────────────
 app.include_router(patients_router, prefix="/api/v1")
 app.include_router(encounters_router, prefix="/api/v1")
+app.include_router(encounter_tasks_router, prefix="/api/v1")
 app.include_router(documents_router, prefix="/api/v1")
 app.include_router(medications_router, prefix="/api/v1")
 app.include_router(alerts_router, prefix="/api/v1")
@@ -79,6 +91,8 @@ app.include_router(tasks_router, prefix="/api/v1")
 app.include_router(admin_audit_router, prefix="/api/v1")
 app.include_router(admin_users_router, prefix="/api/v1")
 app.include_router(scim_router, prefix="/api/v1")
+app.include_router(signalr_router, prefix="/api/v1")
+app.include_router(negotiate_router, prefix="/api/v1")
 
 
 # ── Prometheus Metrics Endpoint ──────────────────────────────────────────────

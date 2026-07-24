@@ -1,5 +1,12 @@
-# services/coordinator-agent/requirements.txt
--r ../shared/requirements.txt
-fastapi>=0.111,<1.0
-uvicorn[standard]>=0.29,<1.0
-google-cloud-pubsub>=2.21,<3.0
+-e ../../shared-libs/agent_base
+fastapi==0.115.0
+uvicorn[standard]==0.30.6
+sqlalchemy[asyncio]==2.0.36
+asyncpg==0.30.0
+google-cloud-pubsub==2.26.1
+langchain==0.2.16
+langchain-google-vertexai==1.0.10
+pydantic==2.9.2
+prometheus-client==0.21.0
+opentelemetry-sdk==1.28.0
+opentelemetry-exporter-gcp-trace==1.8.0

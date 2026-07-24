@@ -187,7 +187,7 @@ class Encounter(Base, TimestampMixin, SoftDeleteMixin):
         sa.Index("ix_encounter_patient_admit", "patient_id", "admit_date"),
         sa.Index("ix_encounter_unit_status", "unit", "status"),
         sa.Index("ix_encounter_risk_tier_status", "risk_tier", "status"),
-        sa.Index("ix_encounter_deleted_at", "deleted_at"),
+        # Note: ix_encounter_deleted_at is already created by SoftDeleteMixin (index=True)
     )
 
     def transition_to(self, target: EncounterStatus) -> None:
