@@ -65,6 +65,10 @@ module "pubsub" {
   hl7_listener_sa        = module.cloud_run.service_accounts["hl7-listener"]
   agent_service_accounts = module.cloud_run.service_accounts
 
+  coordinator_sub_ack_deadline_seconds  = 60
+  coordinator_dlq_max_delivery_attempts = 5
+  alert_notification_channels           = []
+
   depends_on = [module.cloud_run]
 }
 

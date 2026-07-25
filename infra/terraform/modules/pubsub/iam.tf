@@ -16,6 +16,14 @@ resource "google_pubsub_subscription_iam_member" "agent_subscribers" {
   member       = "serviceAccount:${var.agent_service_accounts[each.value]}"
 }
 
+# Coordinator agent subscribes to its dedicated coordinator-sub
+resource "google_pubsub_subscription_iam_member" "coordinator_subscriber" {
+  project      = var.project_id
+  subscription = google_pubsub_subscription.coordinator_sub.name
+  role         = "roles/pubsub.subscriber"
+  member       = "serviceAccount:${var.agent_service_accounts["coordinator-agent"]}"
+}
+
 # ── Pub/Sub service agent → DLQ topic (required for dead-letter routing) ──
 # The Pub/Sub service agent (not the app SA) must be able to publish to the DLQ.
 # This is a common misconfiguration — without this binding, DLQ delivery silently fails.

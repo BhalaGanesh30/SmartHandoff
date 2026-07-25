@@ -1,0 +1,71 @@
+# Cloud Run service configuration for notification-service
+# Apply with: gcloud run services replace service.yaml
+
+apiVersion: serving.knative.dev/v1
+kind: Service
+metadata:
+  name: notification-service
+  labels:
+    cloud.googleapis.com/location: us-central1
+  annotations:
+    run.googleapis.com/launch-stage: BETA
+spec:
+  template:
+    metadata:
+      annotations:
+        # Scaling
+        autoscaling.knative.dev/minScale: "1"
+        autoscaling.knative.dev/maxScale: "10"
+        
+        # VPC Connector (if using Cloud SQL)
+        # run.googleapis.com/vpc-access-connector: projects/PROJECT_ID/locations/REGION/connectors/CONNECTOR_NAME
+        # run.googleapis.com/vpc-access-egress: private-ranges-only
+        
+        # Startup probe
+        run.googleapis.com/startup-cpu-boost: "true"
+    spec:
+      serviceAccountName: notification-service@PROJECT_ID.iam.gserviceaccount.com
+      containerConcurrency: 80
+      timeoutSeconds: 300
+      containers:
+      - name: notification-service
+        image: REGION-docker.pkg.dev/PROJECT_ID/smarthandoff-ENV/notification-svc:latest
+        ports:
+        - name: http1
+          containerPort: 8080
+        env:
+        - name: GCP_PROJECT_ID
+          value: "PROJECT_ID"
+        - name: SENDGRID_FROM_EMAIL
+          value: "noreply@yourdomain.com"
+        - name: TWILIO_FROM_NUMBER
+          value: "+15551234567"
+        - name: PUBSUB_SUBSCRIPTION_ID
+          value: "notification-service-sub"
+        - name: PORT
+          value: "8080"
+        - name: DATABASE_URL
+          valueFrom:
+            secretKeyRef:
+              name: database-url
+              key: latest
+        resources:
+          limits:
+            cpu: "1"
+            memory: 512Mi
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        startupProbe:
+          httpGet:
+            path: /ready
+            port: 8080
+          initialDelaySeconds: 5
+          periodSeconds: 5
+          timeoutSeconds: 5
+          failureThreshold: 10

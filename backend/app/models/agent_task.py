@@ -25,11 +25,15 @@ class AgentTaskStatus(str, enum.Enum):
 
     Terminal statuses (COMPLETED, CANCELLED, FAILED) are never overwritten
     by bulk cancellation operations (US-015).
+    
+    US-019: BLOCKED status indicates task cannot proceed due to patient
+    resolution issues (ambiguous or unresolved patient identity).
     """
 
     QUEUED           = "queued"
     PENDING          = "pending"
     IN_PROGRESS      = "running"
+    BLOCKED          = "blocked"     # US-019: patient resolution issue
     COMPLETED        = "completed"
     FAILED           = "failed"
     PENDING_APPROVAL = "pending_approval"
@@ -72,11 +76,31 @@ class AgentTask(Base, TimestampMixin):
         ),
     )
 
+    # Denormalised routing fields — populated at task creation from the parent Encounter.
+    # Required by SignalR group router (US-022) to avoid a JOIN on every broadcast.
+    unit_id: Mapped[str] = mapped_column(
+        sa.String(20),
+        nullable=False,
+        comment="Hospital unit ID for SignalR group routing (US-022)",
+    )
+    target_role: Mapped[str] = mapped_column(
+        sa.String(50),
+        nullable=False,
+        comment="Target clinical role for SignalR group routing (US-022)",
+    )
+
     status: Mapped[str] = mapped_column(
         sa.String(32),
         nullable=False,
         server_default="queued",
-        comment="One of: queued, running, completed, failed, pending_approval",
+        comment="One of: queued, pending, running, blocked, completed, failed, pending_approval, cancelled",
+    )
+
+    # US-019: Reason task is blocked (e.g., patient identity unresolved)
+    blocked_reason: Mapped[str | None] = mapped_column(
+        sa.String,
+        nullable=True,
+        comment="Reason task is blocked (e.g., patient identity ambiguous or unresolved) - US-019",
     )
 
     started_at: Mapped[datetime | None] = mapped_column(
@@ -84,6 +108,19 @@ class AgentTask(Base, TimestampMixin):
     )
     completed_at: Mapped[datetime | None] = mapped_column(
         sa.DateTime(timezone=True), nullable=True
+    )
+
+    # SLA fields — populated by SLAMonitor (app/monitor/sla_monitor.py, US-021)
+    sla_threshold_minutes: Mapped[int | None] = mapped_column(
+        sa.Integer,
+        nullable=True,
+        comment="SLA threshold in minutes for this agent type (from sla_config.yaml).",
+    )
+    sla_breached: Mapped[bool] = mapped_column(
+        sa.Boolean,
+        nullable=False,
+        server_default=sa.text("false"),
+        comment="Set to TRUE by SLAMonitor when task exceeds its SLA threshold.",
     )
 
     # Idempotency: prevents duplicate agent triggers for the same encounter + agent
@@ -107,6 +144,12 @@ class AgentTask(Base, TimestampMixin):
     __table_args__ = (
         sa.Index("ix_agent_task_encounter_agent", "encounter_id", "agent_type"),
         sa.Index("ix_agent_task_status", "status"),
+        sa.Index(
+            "ix_agent_task_active_status_created",
+            "status",
+            "created_at",
+            postgresql_where=sa.text("status IN ('IN_PROGRESS', 'PENDING')"),
+        ),
         sa.UniqueConstraint(
             "encounter_id",
             "agent_type",

@@ -7,7 +7,7 @@ sprint: 2
 layer: Backend
 estimate: 3h
 priority: Must Have
-status: Draft
+status: Completed
 date: 2026-07-16
 assignee: AI/ML Engineer
 upstream: [US-020/TASK-001, US-020/TASK-002]
@@ -414,11 +414,11 @@ print(f'LLMRetryWrapper delays {_DEFAULT_DELAYS}: PASSED')
 
 ## Definition of Done Checklist
 
-- [ ] `BaseAgentSubscriber` is abstract; `process_task()` is `@abstractmethod`
-- [ ] `BaseAgentSubscriber.shutdown_event` is `asyncio.Event` for SIGTERM integration
-- [ ] `StructuredOutputMixin.invoke_structured()` raises `StructuredOutputError` on Pydantic validation failure
-- [ ] `LLMRetryWrapper._DEFAULT_DELAYS` covers 4 attempts (1s/2s/4s/8s)
-- [ ] `LLMRetryWrapper.call()` only retries `ResourceExhausted`, `ServiceUnavailable`, `DeadlineExceeded`
-- [ ] Package installable via `pip install -e shared-libs/agent_base/`
-- [ ] `coordinator-agent/requirements.txt` references `agent_base` as local dependency
-- [ ] All 5 downstream agents' `requirements.txt` updated to include `-e ../../shared-libs/agent_base`
+- [x] `BaseAgentSubscriber` is abstract; `process_task()` is `@abstractmethod`
+- [x] `BaseAgentSubscriber.shutdown_event` is `asyncio.Event` for SIGTERM integration
+- [x] `StructuredOutputMixin.invoke_structured()` raises `StructuredOutputError` on Pydantic validation failure
+- [x] `LLMRetryWrapper._DEFAULT_DELAYS` covers 4 attempts (1s/2s/4s/8s)
+- [x] `LLMRetryWrapper.call()` only retries `ResourceExhausted`, `ServiceUnavailable`, `DeadlineExceeded`
+- [x] Package installable via `pip install -e shared-libs/agent_base/`
+- [x] `coordinator-agent/requirements.txt` references `agent_base` as local dependency
+- [x] All 5 downstream agents' `requirements.txt` updated to include `-e ../../shared-libs/agent_base`

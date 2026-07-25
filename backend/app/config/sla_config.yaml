@@ -1,0 +1,21 @@
+# SLA thresholds (minutes) per agent type.
+# Source of truth — do NOT duplicate these values in Python code.
+# Referenced by: SLAMonitor (app/monitor/sla_monitor.py), Task Status API
+# US-021 Technical Notes: {DOCUMENTATION: 30, MEDICATION_RECONCILIATION: 60,
+#                           BED_MANAGEMENT: 15, FOLLOW_UP_CARE: 120,
+#                           PATIENT_COMMUNICATION: 30}
+sla_thresholds:
+  DOCUMENTATION: 30
+  MEDICATION_RECONCILIATION: 60
+  BED_MANAGEMENT: 15
+  FOLLOW_UP_CARE: 120
+  PATIENT_COMMUNICATION: 30
+
+# Polling interval for the SLA monitor background job (seconds).
+# 5 minutes = 300 seconds (US-021 DoD).
+monitor_interval_seconds: 300
+
+# Escalation idempotency window (minutes).
+# Only one escalation fires per (encounter_id, agent_type) within this window.
+# Prevents alert fatigue per US-021 Technical Notes.
+escalation_dedup_window_minutes: 30

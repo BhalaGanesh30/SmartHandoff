@@ -1,0 +1,1 @@
+"""Escalation publisher module."""

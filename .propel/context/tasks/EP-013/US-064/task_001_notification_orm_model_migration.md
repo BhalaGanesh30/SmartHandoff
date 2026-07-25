@@ -7,7 +7,7 @@ sprint: 2
 layer: Backend / Database
 estimate: 1.5h
 priority: Must Have
-status: Draft
+status: Completed
 date: 2026-07-16
 assignee: Backend Engineer
 upstream: [US-006]
@@ -16,7 +16,7 @@ upstream: [US-006]
 # TASK-001: Create `notification-service/app/models/notification.py` — Notification ORM Model + Alembic Migration
 
 > **Story:** US-064 | **Epic:** EP-013 | **Sprint:** 2 | **Layer:** Backend / Database | **Est:** 1.5 h
-> **Status:** Draft | **Date:** 2026-07-16
+> **Status:** Completed | **Date:** 2026-07-16
 
 ---
 
@@ -443,13 +443,13 @@ psql -c "SELECT typname FROM pg_type WHERE typname IN ('notification_type','noti
 
 ## Definition of Done Checklist
 
-- [ ] `notification` table has `idempotency_key` with `UNIQUE` constraint (`uq_notification_idempotency_key`)
-- [ ] `status` column is `notification_status` Enum with all 5 states: `PENDING`, `SENT`, `DELIVERED`, `FAILED`, `OPTED_OUT`
-- [ ] `phone_or_email` uses `EncryptedString` type (ADR-007 PHI protection)
-- [ ] `twilio_message_sid` and `sendgrid_message_id` columns present
-- [ ] `retry_count` column defaults to `0`
-- [ ] Alembic migration upgrades and downgrades cleanly against a test DB
-- [ ] `notification-service/app/models/__init__.py` exports `Notification`, `NotificationStatus`, `NotificationType`
+- [x] `notification` table has `idempotency_key` with `UNIQUE` constraint (`uq_notification_idempotency_key`)
+- [x] `status` column is `notification_status` Enum with all 5 states: `PENDING`, `SENT`, `DELIVERED`, `FAILED`, `OPTED_OUT`
+- [x] `phone_or_email` uses `EncryptedString` type (ADR-007 PHI protection)
+- [x] `twilio_message_sid` and `sendgrid_message_id` columns present
+- [x] `retry_count` column defaults to `0`
+- [x] Alembic migration upgrades and downgrades cleanly against a test DB
+- [x] `notification-service/app/models/__init__.py` exports `Notification`, `NotificationStatus`, `NotificationType`
 
 ---
 

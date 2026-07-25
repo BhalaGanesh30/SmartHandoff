@@ -70,12 +70,16 @@ async def _seed_agent_task(
     encounter_id,
     status: AgentTaskStatus = AgentTaskStatus.QUEUED,
     agent_type: str = "coordinator",
+    unit_id: str = "ICU-1",
+    target_role: str = "nurse",
 ) -> AgentTask:
     task = AgentTask(
         id=uuid4(),
         encounter_id=encounter_id,
         agent_type=agent_type,
         status=status.value,
+        unit_id=unit_id,
+        target_role=target_role,
     )
     db.add(task)
     await db.flush()

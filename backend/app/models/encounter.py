@@ -3,6 +3,7 @@
 DR-023: Encounter status transitions are enforced by the state machine
 event listener in app/models/encounter_statemachine.py (TASK-006).
 DR-005: Soft deletes via SoftDeleteMixin.
+US-019: Patient identity resolution status tracking.
 """
 from __future__ import annotations
 
@@ -16,6 +17,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base
 from app.db.mixins import SoftDeleteMixin, TimestampMixin
+from app.models.patient import PatientResolutionStatus
 
 if TYPE_CHECKING:
     from app.models.adt_event import AdtEvent
@@ -88,6 +90,15 @@ class Encounter(Base, TimestampMixin, SoftDeleteMixin):
         nullable=False,
         server_default=EncounterStatus.REGISTERED.value,
         comment="Encounter status; transitions enforced by state machine event listener",
+    )
+
+    # US-019: Patient identity resolution status tracking
+    patient_resolution_status: Mapped[str] = mapped_column(
+        sa.String(16),
+        nullable=False,
+        server_default=PatientResolutionStatus.RESOLVED.value,
+        index=True,  # Index for query performance
+        comment="Status of patient identity resolution: RESOLVED, AMBIGUOUS, or UNRESOLVED (US-019)",
     )
 
     # Admission details
@@ -176,7 +187,7 @@ class Encounter(Base, TimestampMixin, SoftDeleteMixin):
         sa.Index("ix_encounter_patient_admit", "patient_id", "admit_date"),
         sa.Index("ix_encounter_unit_status", "unit", "status"),
         sa.Index("ix_encounter_risk_tier_status", "risk_tier", "status"),
-        sa.Index("ix_encounter_deleted_at", "deleted_at"),
+        # Note: ix_encounter_deleted_at is already created by SoftDeleteMixin (index=True)
     )
 
     def transition_to(self, target: EncounterStatus) -> None:

@@ -1,0 +1,59 @@
+{#-
+  discharge_summary.jinja2
+  Prompt template for Vertex AI Gemini 1.5 Pro discharge summary generation.
+
+  Context variable: encounter (EncounterContext dataclass from fhir_fetcher.py)
+
+  PHI Policy:
+  - MUST use encounter.encounter_id as the patient reference key
+  - MUST use icd10_code + description (not patient demographics)
+  - MUST NOT reference patient name, DOB, address, phone, or SSN
+  - Rendered output logged at DEBUG level to audit log only (not stdout)
+-#}
+You are a board-certified hospitalist physician assistant generating a structured clinical discharge summary.
+Use only the encounter data provided below. Do not invent clinical details not present in the data.
+
+ENCOUNTER REFERENCE: {{ encounter.encounter_id }}
+ENCOUNTER TYPE: {{ encounter.encounter_type }}
+ADMISSION REASON: {{ encounter.admission_reason }}
+LENGTH OF STAY: {% if encounter.length_of_stay_days is not none %}{{ encounter.length_of_stay_days }} day(s){% else %}Not recorded{% endif %}
+DISCHARGE DISPOSITION: {{ encounter.discharge_disposition or "Not specified" }}
+
+DIAGNOSES:
+{% for dx in encounter.diagnoses -%}
+- [{{ dx.icd10_code }}] {{ dx.description }}{% if dx.is_primary %} (PRIMARY){% endif %}
+{% endfor %}
+
+MEDICATIONS AT DISCHARGE:
+{% for med in encounter.medications -%}
+- {{ med.drug_name }} {{ med.dose }} {{ med.frequency }} ({{ med.route }}){% if med.rxnorm_code %} [RxNorm: {{ med.rxnorm_code }}]{% endif %}
+{% endfor %}
+
+{% if encounter.procedures_performed %}
+PROCEDURES PERFORMED:
+{% for proc in encounter.procedures_performed -%}
+- {{ proc }}
+{% endfor %}
+{% endif %}
+
+---
+
+TASK: Generate a complete structured discharge summary JSON with the following mandatory sections.
+All patient-education text (follow_up_instructions, warning_signs, activity_restrictions) must be
+written at a reading level ≤ 8th grade. Be specific and actionable.
+
+Return ONLY valid JSON conforming to the DischargeSummarySchema. Do not include any explanatory text
+outside the JSON object.
+
+Required JSON structure:
+{
+  "encounter_id": "<encounter reference>",
+  "diagnosis_summary": [{"icd10_code": "...", "description": "...", "is_primary": true|false}],
+  "procedures": [{"cpt_code": "...", "description": "...", "date_performed": "..."}],
+  "medications_at_discharge": [{"drug_name": "...", "dose": "...", "frequency": "...", "route": "...", "rxnorm_code": "..."}],
+  "follow_up_instructions": [{"instruction": "...", "timeframe": "...", "provider_type": "..."}],
+  "warning_signs": ["...", "..."],
+  "activity_restrictions": ["...", "..."],
+  "diet_instructions": ["..."],
+  "wound_care_instructions": "..."
+}
