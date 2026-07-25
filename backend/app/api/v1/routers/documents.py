@@ -2,12 +2,20 @@
 from __future__ import annotations
 
 import uuid
+from datetime import datetime, timezone
 from typing import Annotated
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException, status
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.auth.dependencies import require_role
 from app.core.auth.jwt import TokenClaims
 from app.core.auth.rbac import require_permission
+from app.db.deps import get_write_db
+from app.models.document import Document, DocumentStatus
+from app.schemas.document_schemas import DocumentResponse
+from app.services.audit_service import write_audit_log
 
 router = APIRouter(prefix="/documents", tags=["documents"])
 
@@ -40,7 +48,79 @@ async def create_document(
 @router.patch("/{document_id}/approve")
 async def approve_document(
     document_id: uuid.UUID,
-    current_user: Annotated[TokenClaims, Depends(require_permission("document", "approve"))],
-) -> dict:
-    """Approve a document — requires document:approve permission (PHYSICIAN/ADMIN only)."""
-    return {"document_id": str(document_id), "approved": True, "user": current_user.sub}
+    db: Annotated[AsyncSession, Depends(get_write_db)],
+    current_user: Annotated[TokenClaims, Depends(require_role(["PHYSICIAN", "ADVANCED_PRACTICE"]))],
+) -> DocumentResponse:
+    """
+    Approve a document — physician or advanced_practice role only (US-029 Scenario 4).
+
+    Transition document status PENDING_REVIEW → APPROVED and record approval metadata.
+
+    Sets:
+      - Document.status           = APPROVED
+      - Document.approved_at      = UTC now
+      - Document.reviewed_by_user_id = current_user.user_id
+      - Document.ai_assisted_label remains True (permanent provenance — must NOT be reset)
+
+    RBAC: restricted to `PHYSICIAN` and `ADVANCED_PRACTICE` JWT roles (US-029 DoD).
+    Returns 403 for all other roles.
+    Returns 404 if document not found.
+    Returns 409 if document is already APPROVED or REJECTED.
+
+    A HIPAA audit log entry is written unconditionally on success.
+    """
+    # Fetch document with eager-loaded reviewed_by_user relationship
+    result = await db.execute(
+        select(Document)
+        .where(Document.id == document_id)
+    )
+    doc: Document | None = result.scalar_one_or_none()
+
+    if doc is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Document not found",
+        )
+
+    if doc.status == DocumentStatus.APPROVED.value:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Document is already approved.",
+        )
+    if doc.status == DocumentStatus.REJECTED.value:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Rejected documents cannot be approved directly. Regenerate the document.",
+        )
+
+    # ── Apply approval fields (US-029 Scenario 4) ─────────────────────────────
+    doc.status = DocumentStatus.APPROVED.value
+    doc.approved_at = datetime.now(tz=timezone.utc)
+    doc.reviewed_by_user_id = uuid.UUID(current_user.user_id)
+    # NOTE: doc.ai_assisted_label is deliberately NOT modified here.
+    #       The permanent provenance flag must remain True after approval (BR-011).
+
+    # ── HIPAA audit log (US-029 DoD) ──────────────────────────────────────────
+    await write_audit_log(
+        db=db,
+        action="DOCUMENT_APPROVED",
+        resource_type="Document",
+        resource_id=document_id,
+        performed_by=uuid.UUID(current_user.user_id),
+        metadata={
+            "document_type": doc.document_type,
+            "encounter_id": str(doc.encounter_id),
+            "ai_assisted_label": doc.ai_assisted_label,
+            "approved_at": doc.approved_at.isoformat(),
+        },
+    )
+
+    await db.commit()
+    await db.refresh(doc)
+
+    # Build response with resolved display name
+    response = DocumentResponse.model_validate(doc)
+    if doc.reviewed_by_user:
+        response.reviewed_by_display_name = doc.reviewed_by_user.full_name
+
+    return response

@@ -1,0 +1,112 @@
+# checklist_templates.yaml
+# =========================
+# Static fallback handoff checklists keyed by ADT transition type.
+# Used when the Vertex AI Gemini call exceeds the 15-second timeout (US-023 AC Scenario 4).
+#
+# Each entry maps to an ADT event_type code:
+#   A01  — Admission
+#   A02  — Transfer
+#   A03  — Discharge
+#   DEFAULT — Unknown or unmapped transition type
+#
+# All items must satisfy ChecklistItem validation:
+#   - item starts with an actionable verb (Verify, Confirm, Schedule, Review, Assess, Ensure, Notify)
+#   - priority is one of: HIGH, MEDIUM, LOW
+#   - category is a non-empty string
+#
+# Design refs: US-023 DoD, AC Scenario 4, AIR-021
+
+A01:
+  - item: "Verify patient identification and allergy documentation is complete"
+    category: "documentation"
+    priority: "HIGH"
+  - item: "Confirm admission orders are signed and entered in EHR"
+    category: "documentation"
+    priority: "HIGH"
+  - item: "Assess patient orientation and neurological baseline on arrival"
+    category: "safety"
+    priority: "HIGH"
+  - item: "Review current medication list and reconcile with admission orders"
+    category: "medications"
+    priority: "HIGH"
+  - item: "Ensure fall risk assessment and bed alarm are activated"
+    category: "safety"
+    priority: "MEDIUM"
+  - item: "Notify care team of any pending lab or imaging results from ED"
+    category: "documentation"
+    priority: "MEDIUM"
+  - item: "Confirm IV access patency and document insertion site date"
+    category: "equipment"
+    priority: "MEDIUM"
+  - item: "Schedule dietitian consult if nutritional risk identified"
+    category: "follow_up"
+    priority: "LOW"
+
+A02:
+  - item: "Verify receiving unit has been notified and bed is ready"
+    category: "documentation"
+    priority: "HIGH"
+  - item: "Confirm all active orders have been transferred to receiving unit"
+    category: "documentation"
+    priority: "HIGH"
+  - item: "Review current vital signs and document pre-transfer baseline"
+    category: "safety"
+    priority: "HIGH"
+  - item: "Ensure all IV lines, drains, and tubes are secured for transport"
+    category: "equipment"
+    priority: "HIGH"
+  - item: "Confirm monitoring equipment is available during transport"
+    category: "equipment"
+    priority: "HIGH"
+  - item: "Notify receiving nurse of isolation precautions, if applicable"
+    category: "safety"
+    priority: "MEDIUM"
+  - item: "Verify medication administration record is current and reconciled"
+    category: "medications"
+    priority: "MEDIUM"
+  - item: "Assess patient's understanding of the reason for transfer"
+    category: "patient_education"
+    priority: "LOW"
+
+A03:
+  - item: "Verify discharge prescriptions are printed and reviewed with patient"
+    category: "medications"
+    priority: "HIGH"
+  - item: "Confirm follow-up appointment is scheduled with primary care provider"
+    category: "follow_up"
+    priority: "HIGH"
+  - item: "Review discharge instructions with patient and confirm comprehension"
+    category: "patient_education"
+    priority: "HIGH"
+  - item: "Ensure patient has transportation arranged for safe discharge"
+    category: "safety"
+    priority: "HIGH"
+  - item: "Confirm any home health or DME orders have been placed and confirmed"
+    category: "follow_up"
+    priority: "MEDIUM"
+  - item: "Notify pharmacy of any controlled substance prescriptions requiring processing"
+    category: "medications"
+    priority: "MEDIUM"
+  - item: "Verify patient education materials are provided in preferred language"
+    category: "patient_education"
+    priority: "MEDIUM"
+  - item: "Schedule specialist follow-up if indicated by discharge diagnosis"
+    category: "follow_up"
+    priority: "LOW"
+
+DEFAULT:
+  - item: "Verify current medication list is accurate and reconciled"
+    category: "medications"
+    priority: "HIGH"
+  - item: "Confirm care plan goals and pending tasks are communicated to receiving team"
+    category: "documentation"
+    priority: "HIGH"
+  - item: "Assess patient safety risks and document in handoff note"
+    category: "safety"
+    priority: "HIGH"
+  - item: "Review all active orders for completeness and accuracy"
+    category: "documentation"
+    priority: "MEDIUM"
+  - item: "Notify relevant specialists of patient status change"
+    category: "follow_up"
+    priority: "LOW"

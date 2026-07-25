@@ -29,6 +29,7 @@ locals {
     gcs_hmac_key              = "smarthandoff-gcs-hmac-key-${var.environment}"
     vertex_ai_project         = "smarthandoff-vertex-ai-project-${var.environment}"
     slack_webhook_url         = "smarthandoff-slack-webhook-url-${var.environment}"
+    azure_signalr_connection_string = "smarthandoff-azure-signalr-connection-string-${var.environment}"
   }
 }
 

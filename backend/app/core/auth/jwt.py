@@ -180,6 +180,49 @@ def issue_app_jwt(oidc_claims: dict) -> tuple[str, str]:
     return token, jti
 
 
+def create_access_token(subject: str, extra_claims: dict | None = None) -> str:
+    """Create a SmartHandoff application JWT with custom claims.
+
+    This is a simplified JWT issuance function for non-OIDC flows such as
+    patient portal OTP authentication (US-065). Unlike issue_app_jwt(), this
+    does not require OIDC claims mapping.
+
+    Args:
+        subject: The user/patient identifier to place in the 'sub' claim.
+        extra_claims: Optional dict of additional claims to merge into the payload.
+                      Common keys: "role", "email", "phone", "units".
+
+    Returns:
+        str: Signed JWT string with 8-hour expiry.
+
+    Example (US-065 patient portal):
+        token = create_access_token(
+            subject=patient_id,
+            extra_claims={"role": "PATIENT", "phone": "+15005550006"}
+        )
+    """
+    now = int(datetime.now(tz=timezone.utc).timestamp())
+    jti = str(_uuid.uuid4())
+
+    payload = {
+        "sub": subject,
+        "jti": jti,
+        "iat": now,
+        "exp": now + _TOKEN_EXPIRY_SECONDS,
+        **(extra_claims or {}),
+    }
+
+    token = jwt.encode(payload, _jwt_signing_key(), algorithm=_ALGORITHM)
+    logger.info(
+        "Access token created for sub=%s jti=%s exp_in=%ds",
+        subject,
+        jti,
+        _TOKEN_EXPIRY_SECONDS,
+        extra={"event_type": "jwt_issued", "jti": jti, **extra_claims} if extra_claims else {"event_type": "jwt_issued", "jti": jti},
+    )
+    return token
+
+
 # ── Bearer validation (FastAPI dependency) ────────────────────────────────────
 
 async def get_current_user(
