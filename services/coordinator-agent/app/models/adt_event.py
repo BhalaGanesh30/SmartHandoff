@@ -33,3 +33,8 @@ class ADTEvent(BaseModel):
     event_type: ADTEventType
     event_timestamp: datetime
     source_message_id: str | None = None
+    
+    # Clinical context for checklist generation (US-023)
+    diagnosis_codes: list[str] | None = None
+    unit_name: str | None = None
+    medication_names: list[str] | None = None

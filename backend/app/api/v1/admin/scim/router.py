@@ -225,9 +225,9 @@ async def scim_get_user(
 )
 async def scim_list_users(
     request: Request,
+    db: Annotated[AsyncSession, Depends(get_write_db)],
     startIndex: int = Query(default=1, ge=1, description="RFC 7644 startIndex (1-based)"),
     count: int = Query(default=100, ge=1, le=500, description="RFC 7644 count (page size, max 500)"),
-    db: Annotated[AsyncSession, Depends(get_write_db)],
 ) -> ScimListResponse:
     """Return a paginated SCIM ListResponse (RFC 7643 §3.3)."""
     # Total count

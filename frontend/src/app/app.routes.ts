@@ -25,6 +25,13 @@ export const routes: Routes = [
     loadComponent: () =>
       import('./features/dashboard/dashboard.component').then(m => m.DashboardComponent),
   },
+  {
+    path: 'documents/:id/review',
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import('./features/documents/document-review/document-review.component')
+        .then(m => m.DocumentReviewComponent),
+  },
   // Default redirect
   { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
   { path: '**', redirectTo: 'dashboard' },

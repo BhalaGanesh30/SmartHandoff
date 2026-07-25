@@ -1,3 +1,4 @@
+
 ---
 agent: agent
 description: Implements features, fixes bugs, and completes development tasks using comprehensive task files with systematic validation and quality control.

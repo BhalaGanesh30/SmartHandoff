@@ -24,15 +24,19 @@ Design refs:
 """
 from __future__ import annotations
 
+import json
 import logging
 import time
 from typing import TYPE_CHECKING
 
 from prometheus_client import Counter, Histogram
+from sqlalchemy import update
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.checklist import ChecklistInput, ChecklistService
 from app.coordinator.task_mapping import AgentTaskType, get_task_types_for_event
+from app.models.handoff_checklist import HandoffChecklist
 
 if TYPE_CHECKING:
     from app.models.adt_event import ADTEvent
@@ -78,6 +82,7 @@ class TransitionCoordinatorAgent:
 
     def __init__(self, db_session: AsyncSession) -> None:
         self._db_session = db_session
+        self._checklist_service = ChecklistService()
 
     async def process_event(self, event: "ADTEvent") -> int:
         """Create ``AgentTask`` records for all task types mapped to ``event``.
@@ -113,6 +118,10 @@ class TransitionCoordinatorAgent:
             return 0
 
         rows_inserted = await self._create_tasks_atomically(event, task_types)
+
+        # Generate and persist checklist for coordinator task (US-023)
+        if event.diagnosis_codes and event.unit_name:
+            await self._generate_and_persist_checklist(event)
 
         elapsed = time.monotonic() - start
         COORDINATOR_LATENCY.observe(elapsed)
@@ -173,3 +182,82 @@ class TransitionCoordinatorAgent:
                 )
                 result = await session.execute(stmt)
                 return len(result.fetchall())
+
+    async def _generate_and_persist_checklist(self, event: "ADTEvent") -> None:
+        """Generate and persist checklist for the coordinator AgentTask.
+
+        Calls ChecklistService to generate the checklist, then writes it into
+        the coordinator task's metadata JSONB using PostgreSQL merge operator.
+
+        Args:
+            event: ADTEvent with clinical context for checklist generation.
+        """
+        # Extract ADT code from event type (e.g., "ADT^A03" -> "A03")
+        event_code = event.event_type.value.split("^")[-1] if "^" in event.event_type.value else event.event_type.value
+
+        checklist_input = ChecklistInput(
+            encounter_id=str(event.encounter_id),
+            diagnosis_codes=event.diagnosis_codes or [],
+            unit_name=event.unit_name or "Unknown Unit",
+            transition_type=event_code,
+            medication_names=event.medication_names or [],
+        )
+
+        try:
+            checklist: HandoffChecklist = await self._checklist_service.generate(checklist_input)
+            await self._persist_checklist(event.encounter_id, checklist)
+        except Exception as exc:  # noqa: BLE001
+            logger.error(
+                "checklist_generation_failed",
+                extra={
+                    "encounter_id": str(event.encounter_id),
+                    "error": str(exc),
+                },
+            )
+
+    async def _persist_checklist(
+        self,
+        encounter_id: str,
+        checklist: HandoffChecklist,
+    ) -> None:
+        """Write generated checklist into coordinator AgentTask.metadata JSONB.
+
+        Merges checklist data into the existing metadata dict so that other
+        metadata fields written by the coordinator are preserved.
+
+        Args:
+            encounter_id: Encounter UUID.
+            checklist: Validated HandoffChecklist from ChecklistService.
+        """
+        from app.models.agent_task import AgentTask  # noqa: PLC0415
+
+        checklist_payload = {
+            "checklist": [item.model_dump() for item in checklist.checklist],
+            "generated_type": checklist.generated_type,
+            "transition_type": checklist.transition_type,
+        }
+
+        async with self._db_session() as session:
+            async with session.begin():
+                # Fetch latest state and merge — avoids clobbering concurrent metadata writes
+                await session.execute(
+                    update(AgentTask)
+                    .where(
+                        AgentTask.encounter_id == encounter_id,
+                        AgentTask.agent_type == "coordinator",
+                    )
+                    .values(
+                        metadata=AgentTask.metadata.op("||")(
+                            json.dumps(checklist_payload)
+                        )
+                    )
+                )
+
+        logger.info(
+            "checklist_persisted",
+            extra={
+                "encounter_id": str(encounter_id),
+                "generated_type": checklist.generated_type,
+                "item_count": len(checklist.checklist),
+            },
+        )

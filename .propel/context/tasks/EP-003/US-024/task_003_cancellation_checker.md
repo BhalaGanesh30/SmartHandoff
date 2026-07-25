@@ -7,7 +7,7 @@ sprint: 2
 layer: Backend
 estimate: 1h
 priority: Must Have
-status: Draft
+status: Done
 date: 2026-07-16
 assignee: AI/ML Engineer
 upstream: [US-024/TASK-001]

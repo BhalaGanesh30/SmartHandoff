@@ -1,0 +1,12 @@
+# Document completeness configuration
+# Controls which fields must be non-null and non-empty for each document type.
+# Adding a field here immediately affects all future validation runs (US-026 AC Scenario 3).
+
+document_types:
+  discharge_summary:
+    required_fields:
+      - diagnosis_summary
+      - medications_at_discharge
+      - follow_up_instructions
+      - warning_signs
+      - activity_restrictions

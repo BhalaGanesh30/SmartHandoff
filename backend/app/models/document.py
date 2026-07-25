@@ -7,9 +7,11 @@ from __future__ import annotations
 
 import enum
 import uuid
+from datetime import datetime
 from typing import TYPE_CHECKING
 
 import sqlalchemy as sa
+from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base
@@ -17,6 +19,7 @@ from app.db.encryption import EncryptedText
 from app.db.mixins import TimestampMixin
 
 if TYPE_CHECKING:
+    from app.models.app_user import AppUser
     from app.models.encounter import Encounter
 
 
@@ -94,16 +97,87 @@ class Document(Base, TimestampMixin):
         comment="One of: LLM, TEMPLATE — TEMPLATE set on Vertex AI fallback (AIR-022)",
     )
 
+    # Completeness validation result (populated by CompletenessValidator post-generation)
+    completeness_status: Mapped[str | None] = mapped_column(
+        sa.String(20),
+        nullable=True,
+        default=None,
+        comment="COMPLETE or INCOMPLETE — set by CompletenessValidator after document generation",
+    )
+
+    missing_fields: Mapped[list | None] = mapped_column(
+        JSONB,
+        nullable=True,
+        default=list,
+        server_default="'[]'::jsonb",
+        comment="Ordered list of field names absent from the document. Empty list when COMPLETE.",
+    )
+
+    # US-027: Per-language patient instructions (PatientInstructionsDocument.translations)
+    translations: Mapped[dict | None] = mapped_column(
+        JSONB,
+        nullable=True,
+        default=None,
+        comment=(
+            "Per-language patient instruction content keyed by BCP-47 code. "
+            "JSON schema: Dict[str, TranslationEntry]. Populated by PatientInstructionsGenerator."
+        ),
+    )
+
+    # US-027: Document-level metadata flags including language_fallback and requested_language
+    # Also used by future agents for document-type-specific metadata
+    document_metadata: Mapped[dict | None] = mapped_column(
+        "metadata",
+        JSONB,
+        nullable=True,
+        default=None,
+        comment=(
+            "Arbitrary document metadata dict. "
+            "Keys for US-027: language_fallback (bool), requested_language (str | null)."
+        ),
+    )
+
     approved_by_id: Mapped[uuid.UUID | None] = mapped_column(
         sa.UUID(as_uuid=True),
         sa.ForeignKey("app_user.id", ondelete="SET NULL"),
         nullable=True,
     )
 
+    # ── US-029 fields ──────────────────────────────────────────────────────────
+    ai_assisted_label: Mapped[bool] = mapped_column(
+        sa.Boolean,
+        nullable=False,
+        server_default=sa.text("FALSE"),
+        comment="TRUE for all AI-generated documents. Permanent — never reset after approval.",
+    )
+    """Permanent AI provenance flag (BR-011). Set by the Documentation Agent on insert."""
+
+    approved_at: Mapped[datetime | None] = mapped_column(
+        sa.DateTime(timezone=True),
+        nullable=True,
+        default=None,
+        comment="UTC timestamp when a physician approved this document.",
+    )
+    """NULL until a physician calls PATCH …/approve (US-029 Scenario 4)."""
+
+    reviewed_by_user_id: Mapped[uuid.UUID | None] = mapped_column(
+        sa.ForeignKey("app_user.id", ondelete="SET NULL"),
+        nullable=True,
+        default=None,
+        comment="FK to the approving clinician; drives the 'Approved by …' footer.",
+    )
+    """References app_user.id. Populated together with approved_at."""
+
     encounter: Mapped["Encounter"] = relationship(
         "Encounter",
         back_populates="documents",
         lazy="select",
+    )
+
+    reviewed_by_user: Mapped["AppUser | None"] = relationship(
+        "AppUser",
+        foreign_keys=[reviewed_by_user_id],
+        lazy="joined",  # Eager-load for the 'Approved by' footer
     )
 
     __table_args__ = (

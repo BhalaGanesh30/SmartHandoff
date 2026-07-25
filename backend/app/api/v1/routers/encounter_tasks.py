@@ -20,6 +20,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.auth.jwt import TokenClaims, get_current_user
 from app.db.deps import get_read_db
 from app.models.agent_task import AgentTask
+from app.models.document import Document
 from app.models.encounter import Encounter
 from app.schemas.agent_task import AgentTaskListResponse, AgentTaskResponse
 
@@ -62,10 +63,14 @@ async def list_encounter_tasks(
 
     Requires a valid staff JWT. Uses the read replica for query performance (TR-010).
     Includes sla_threshold_minutes (backfilled from config if NULL) and sla_breached flag.
+    
+    US-026: For DOCUMENTATION tasks, includes completeness_status and missing_fields from
+    the most recent Document record.
     """
     # Validate encounter exists
     await _get_encounter_or_404(encounter_id, db)
 
+    # Fetch all tasks for the encounter
     stmt = (
         sa.select(AgentTask)
         .where(AgentTask.encounter_id == encounter_id)
@@ -74,6 +79,18 @@ async def list_encounter_tasks(
     result = await db.execute(stmt)
     tasks: list[AgentTask] = list(result.scalars().all())
 
+    # Fetch all documents for the encounter (US-026)
+    doc_stmt = (
+        sa.select(Document)
+        .where(Document.encounter_id == encounter_id)
+        .order_by(Document.created_at.desc())
+    )
+    doc_result = await db.execute(doc_stmt)
+    documents: list[Document] = list(doc_result.scalars().all())
+    
+    # Find the latest document (most recent by created_at)
+    latest_doc = documents[0] if documents else None
+
     logger.info(
         "Tasks fetched: encounter_id=%s count=%d user=%s",
         encounter_id,
@@ -81,7 +98,19 @@ async def list_encounter_tasks(
         current_user.sub,
     )
 
-    task_responses = [AgentTaskResponse.model_validate(t) for t in tasks]
+    # Build response with document completeness info for DOCUMENTATION tasks
+    task_responses: list[AgentTaskResponse] = []
+    for task in tasks:
+        task_resp = AgentTaskResponse.model_validate(task)
+        
+        # US-026: Populate document completeness fields for DOCUMENTATION tasks
+        if task.agent_type.lower() == "documentation" and latest_doc:
+            task_resp.document_id = latest_doc.id
+            task_resp.generation_type = latest_doc.generation_type
+            task_resp.completeness_status = latest_doc.completeness_status
+            task_resp.missing_fields = latest_doc.missing_fields or []
+        
+        task_responses.append(task_resp)
 
     return AgentTaskListResponse(
         encounter_id=encounter_id,

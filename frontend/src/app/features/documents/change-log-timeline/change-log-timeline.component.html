@@ -1,0 +1,54 @@
+<!-- change-log-timeline.component.html -->
+<section class="changelog" aria-label="Document change history">
+  <h3 class="changelog__title">
+    <mat-icon aria-hidden="true">history</mat-icon>
+    Change History
+  </h3>
+
+  <ng-container *ngIf="changeLog$ | async as entries; else loadingTpl">
+    <p *ngIf="entries.length === 0" class="changelog__empty" role="status">
+      No changes recorded yet.
+    </p>
+
+    <ol class="changelog__list" aria-label="Change log entries">
+      <li
+        *ngFor="let entry of entries"
+        class="changelog__entry"
+        [attr.aria-label]="'Change to ' + entry.field + ' by ' + (entry.author_display_name ?? entry.author_id)"
+      >
+        <span class="changelog__dot" aria-hidden="true"></span>
+        <div class="changelog__body">
+          <span class="changelog__author">
+            {{ entry.author_display_name ?? 'Unknown user' }}
+          </span>
+          <span class="changelog__meta">
+            changed <strong>{{ entry.field | titlecase }}</strong>
+            &bull;
+            <time [dateTime]="entry.timestamp">
+              {{ entry.timestamp | date: 'dd MMM yyyy, HH:mm' }} UTC
+            </time>
+          </span>
+          <mat-expansion-panel class="changelog__diff-panel">
+            <mat-expansion-panel-header>
+              <mat-panel-title>View change</mat-panel-title>
+            </mat-expansion-panel-header>
+            <div class="changelog__diff">
+              <div class="changelog__diff-old">
+                <span class="label">Before</span>
+                <pre>{{ entry.old_value | json }}</pre>
+              </div>
+              <div class="changelog__diff-new">
+                <span class="label">After</span>
+                <pre>{{ entry.new_value | json }}</pre>
+              </div>
+            </div>
+          </mat-expansion-panel>
+        </div>
+      </li>
+    </ol>
+  </ng-container>
+
+  <ng-template #loadingTpl>
+    <p class="changelog__loading" role="status" aria-live="polite">Loading change history…</p>
+  </ng-template>
+</section>

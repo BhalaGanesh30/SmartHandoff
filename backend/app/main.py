@@ -17,6 +17,10 @@ from app.core.logging_config import configure_logging
 configure_logging()
 
 from app.api.v1.routers.auth import router as auth_router
+from app.api.v1.routers.auth_patient_otp import router as patient_otp_router
+from app.api.v1.routers.auth_patient_verify import router as patient_verify_router
+from app.api.v1.routers.portal import router as portal_router
+from app.api.v1.routers.portal_preferences import router as portal_preferences_router
 from app.api.v1.routers.patients import router as patients_router
 from app.api.v1.routers.encounters import router as encounters_router
 from app.api.v1.routers.encounter_tasks import router as encounter_tasks_router
@@ -26,6 +30,7 @@ from app.api.v1.routers.alerts import router as alerts_router
 from app.api.v1.routers.beds import router as beds_router
 from app.api.v1.routers.analytics import router as analytics_router
 from app.api.v1.routers.tasks import router as tasks_router
+from app.api.v1.routers.notifications import router as notifications_router
 from app.api.v1.routers.admin.audit import router as admin_audit_router
 from app.api.v1.routers.admin.users import router as admin_users_router
 from app.api.v1.admin.scim.router import router as scim_router
@@ -77,8 +82,14 @@ app.add_middleware(PhiLogSanitiserMiddleware)
 # ── Public routers (no JWT required) ─────────────────────────────────────────
 # Auth router — public endpoint (no JWT required to exchange OIDC id_token)
 app.include_router(auth_router, prefix="/api/v1")
+# Patient OTP router — public endpoint (portal token validation only)
+app.include_router(patient_otp_router, prefix="/api/v1")
+# Patient OTP verify router — public endpoint (portal token + OTP validation)
+app.include_router(patient_verify_router, prefix="/api/v1")
 
 # ── Protected routers (JWT + RBAC required) ───────────────────────────────────
+app.include_router(portal_router, prefix="/api/v1")
+app.include_router(portal_preferences_router, prefix="/api/v1")
 app.include_router(patients_router, prefix="/api/v1")
 app.include_router(encounters_router, prefix="/api/v1")
 app.include_router(encounter_tasks_router, prefix="/api/v1")
@@ -88,6 +99,7 @@ app.include_router(alerts_router, prefix="/api/v1")
 app.include_router(beds_router, prefix="/api/v1")
 app.include_router(analytics_router, prefix="/api/v1")
 app.include_router(tasks_router, prefix="/api/v1")
+app.include_router(notifications_router, prefix="/api/v1")
 app.include_router(admin_audit_router, prefix="/api/v1")
 app.include_router(admin_users_router, prefix="/api/v1")
 app.include_router(scim_router, prefix="/api/v1")

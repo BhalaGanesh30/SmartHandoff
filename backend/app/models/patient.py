@@ -111,6 +111,14 @@ class Patient(Base, TimestampMixin, SoftDeleteMixin):
         comment="Timestamp when patient identity was resolved (US-019)",
     )
 
+    # US-067: Notification preferences
+    notification_opt_out: Mapped[bool] = mapped_column(
+        sa.Boolean,
+        nullable=False,
+        server_default=sa.text("FALSE"),
+        comment="Patient has opted out of non-urgent notifications (US-067)",
+    )
+
     # Relationships
     encounters: Mapped[list["Encounter"]] = relationship(
         "Encounter",
