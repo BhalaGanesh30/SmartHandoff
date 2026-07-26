@@ -20,6 +20,10 @@ engine = create_async_engine(
     pool_pre_ping=True,
     pool_size=20,
     max_overflow=0,
+    connect_args={
+        "timeout": 30,  # Connection timeout in seconds
+        "command_timeout": 30,  # Command timeout in seconds
+    },
 )
 
 # Async session factory
@@ -33,10 +37,9 @@ AsyncSessionFactory = async_sessionmaker(
 async def init_db() -> None:
     """Initialize database connection pool.
     
-    Called on service startup to verify database connectivity.
+    Verifies database connectivity on service startup.
     """
     async with engine.begin() as conn:
-        # Test connection
         await conn.execute(sa.text("SELECT 1"))
 
 

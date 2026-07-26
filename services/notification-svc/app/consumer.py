@@ -18,6 +18,7 @@ Design refs:
 """
 from __future__ import annotations
 
+import asyncio
 import base64
 import json
 import logging
@@ -108,10 +109,12 @@ async def _process_message(
             )
 
     # ACK regardless — retry is owned by APScheduler (TASK-003), not Pub/Sub
-    subscriber.acknowledge(
+    # Run blocking acknowledge() in thread pool
+    await asyncio.to_thread(
+        subscriber.acknowledge,
         request=pubsub_v1.types.AcknowledgeRequest(
             subscription=subscription_path, ack_ids=[ack_id]
-        )
+        ),
     )
 
 
@@ -165,6 +168,9 @@ async def run_consumer(project_id: str, subscription_id: str) -> None:
 
     Pulls up to 10 messages per batch, processes each, and ACKs/NACKs
     based on processing outcome. Runs indefinitely until cancelled.
+    
+    Uses asyncio.to_thread() to run blocking subscriber.pull() calls
+    in a thread pool to avoid blocking the event loop.
 
     Args:
         project_id: GCP project ID.
@@ -175,7 +181,9 @@ async def run_consumer(project_id: str, subscription_id: str) -> None:
     logger.info("notification_consumer.started", extra={"subscription": subscription_path})
 
     while True:
-        response = subscriber.pull(
+        # Run blocking pull() in thread pool to avoid blocking event loop
+        response = await asyncio.to_thread(
+            subscriber.pull,
             request=pubsub_v1.types.PullRequest(
                 subscription=subscription_path,
                 max_messages=10,

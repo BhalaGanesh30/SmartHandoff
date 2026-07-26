@@ -38,7 +38,8 @@ _RETENTION_DAYS = 2190
 
 def upgrade() -> None:
     # ── 1. Enable pg_cron extension ───────────────────────────────────────
-    op.execute("CREATE EXTENSION IF NOT EXISTS pg_cron;")
+    # pg_cron already enabled in postgres database
+    # op.execute("CREATE EXTENSION IF NOT EXISTS pg_cron;")
     op.execute("GRANT USAGE ON SCHEMA cron TO CURRENT_USER;")
     op.execute("GRANT SELECT, INSERT, UPDATE, DELETE ON cron.job TO CURRENT_USER;")
 

@@ -1,7 +1,19 @@
 # services/notification-svc/requirements.txt
--r ../shared/requirements.txt
+# Last modified: 2026-07-26 - Added python-multipart for Twilio webhooks
+
+# Shared dependencies (inlined from ../shared/requirements.txt)
+# OpenTelemetry SDK + Cloud Trace exporter + FastAPI auto-instrumentation
+opentelemetry-api>=1.25,<2.0
+opentelemetry-sdk>=1.25,<2.0
+opentelemetry-exporter-gcp-trace>=1.6,<2.0
+opentelemetry-propagator-gcp>=1.6,<2.0
+opentelemetry-instrumentation-fastapi>=0.46b0,<1.0
+opentelemetry-propagator-b3>=1.25,<2.0
+
+# Service-specific dependencies
 fastapi>=0.111,<1.0
 uvicorn[standard]>=0.29,<1.0
+python-multipart>=0.0.9  # Required for form data (Twilio webhooks)
 
 # Pydantic with email validation
 pydantic[email]>=2.0,<3.0

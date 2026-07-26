@@ -34,7 +34,10 @@ async def ready() -> dict:
 @app.on_event("startup")
 async def _startup() -> None:
     """Initialize database and start Pub/Sub consumer on service startup."""
+    # Initialize database connection pool
     await init_db()
+    
+    # Start Pub/Sub consumer in background task
     project_id = os.environ["GCP_PROJECT_ID"]
     subscription_id = os.environ.get("PUBSUB_SUBSCRIPTION_ID", "notification-service-sub")
     asyncio.create_task(run_consumer(project_id, subscription_id))
