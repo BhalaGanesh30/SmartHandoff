@@ -55,15 +55,18 @@ async def lifespan(app: FastAPI):
     get_phi_encryption_key()
     # 3. Warm write + read DB connection pools (PgBouncer → primary + direct replica).
     create_db_engines()
-    # 4. Initialize SignalR broadcaster (US-022)
+    # 4. Initialize SignalR broadcaster (US-022) - optional
     settings = get_settings()
-    broadcaster = SignalRBroadcaster(settings.AZURE_SIGNALR_CONNECTION_STRING)
-    set_signalr_broadcaster(broadcaster)
+    broadcaster = None
+    if settings.AZURE_SIGNALR_CONNECTION_STRING:
+        broadcaster = SignalRBroadcaster(settings.AZURE_SIGNALR_CONNECTION_STRING)
+        set_signalr_broadcaster(broadcaster)
     yield
     # Shutdown: drain DB connections gracefully before Cloud Run SIGTERM timeout (30s).
     await dispose_db_engines()
     # Shutdown: close SignalR broadcaster HTTP client
-    await broadcaster.aclose()
+    if broadcaster:
+        await broadcaster.aclose()
 
 
 app = FastAPI(

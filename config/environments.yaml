@@ -1,0 +1,114 @@
+# SmartHandoff Multi-Environment Configuration
+# Define settings for dev, staging, and production environments
+
+environments:
+  dev:
+    gcp_project: "smarthandoff-dev"
+    region: "us-central1"
+    
+    backend:
+      service_name: "smarthandoff-backend-dev"
+      min_instances: 0
+      max_instances: 3
+      memory: "512Mi"
+      cpu: 1
+      concurrency: 80
+      
+    frontend:
+      service_name: "smarthandoff-frontend-dev"
+      min_instances: 0
+      max_instances: 2
+      memory: "256Mi"
+      cpu: 1
+      
+    notification_svc:
+      service_name: "notification-service-dev"
+      min_instances: 0
+      max_instances: 3
+      memory: "512Mi"
+      cpu: 1
+      
+    database:
+      instance_name: "smarthandoff-dev"
+      tier: "db-f1-micro"
+      database_name: "smarthandoff_dev"
+      
+    secrets:
+      jwt_secret: "jwt-secret-dev"
+      twilio_account_sid: "twilio-account-sid-dev"
+      twilio_auth_token: "twilio-auth-token-dev"
+      sendgrid_api_key: "sendgrid-api-key-dev"
+      
+  staging:
+    gcp_project: "smarthandoff-staging"
+    region: "us-central1"
+    
+    backend:
+      service_name: "smarthandoff-backend-staging"
+      min_instances: 1
+      max_instances: 5
+      memory: "1Gi"
+      cpu: 2
+      concurrency: 100
+      
+    frontend:
+      service_name: "smarthandoff-frontend-staging"
+      min_instances: 1
+      max_instances: 3
+      memory: "512Mi"
+      cpu: 1
+      
+    notification_svc:
+      service_name: "notification-service-staging"
+      min_instances: 1
+      max_instances: 5
+      memory: "512Mi"
+      cpu: 1
+      
+    database:
+      instance_name: "smarthandoff-staging"
+      tier: "db-g1-small"
+      database_name: "smarthandoff_staging"
+      
+    secrets:
+      jwt_secret: "jwt-secret-staging"
+      twilio_account_sid: "twilio-account-sid-staging"
+      twilio_auth_token: "twilio-auth-token-staging"
+      sendgrid_api_key: "sendgrid-api-key-staging"
+      
+  prod:
+    gcp_project: "smarthandoff"  # Your existing project
+    region: "us-central1"
+    
+    backend:
+      service_name: "smarthandoff-backend"
+      min_instances: 2
+      max_instances: 10
+      memory: "2Gi"
+      cpu: 2
+      concurrency: 100
+      
+    frontend:
+      service_name: "smarthandoff-frontend"
+      min_instances: 2
+      max_instances: 10
+      memory: "512Mi"
+      cpu: 1
+      
+    notification_svc:
+      service_name: "notification-service"
+      min_instances: 1
+      max_instances: 10
+      memory: "512Mi"
+      cpu: 1
+      
+    database:
+      instance_name: "smarthandoff"  # Your existing instance
+      tier: "db-custom-2-7680"
+      database_name: "smarthandoff"
+      
+    secrets:
+      jwt_secret: "jwt-secret"
+      twilio_account_sid: "twilio-account-sid"
+      twilio_auth_token: "twilio-auth-token"
+      sendgrid_api_key: "sendgrid-api-key"

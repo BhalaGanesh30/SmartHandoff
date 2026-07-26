@@ -6,7 +6,12 @@ from app.models.bed import Bed
 from app.models.chatbot_transcript import ChatbotTranscript
 from app.models.document import Document
 from app.models.encounter import Encounter, EncounterStatus, RiskTier
-from app.models.medication import Medication
+from app.models.medication import (
+    Medication,
+    ReconciliationCategory,
+    ReconciliationFlag,
+    MedicationListSource,
+)
 from app.models.patient import Patient
 
 # Import state machine module to register the SQLAlchemy event listener.
@@ -24,6 +29,9 @@ __all__ = [
     "Encounter",
     "EncounterStatus",
     "Medication",
+    "MedicationListSource",
     "Patient",
+    "ReconciliationCategory",
+    "ReconciliationFlag",
     "RiskTier",
 ]

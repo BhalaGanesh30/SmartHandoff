@@ -14,6 +14,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libpq-dev \
     && rm -rf /var/lib/apt/lists/*
 
+# Cache-busting argument (forces rebuild from this point)
+ARG CACHEBUST=1
+
 # Copy requirements and install dependencies
 COPY requirements.txt .
 RUN pip install --user --no-cache-dir --no-warn-script-location -r requirements.txt
