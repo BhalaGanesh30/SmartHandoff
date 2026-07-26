@@ -48,10 +48,8 @@ def upgrade() -> None:
     # ── 2. Grant broad table privileges to app_write ──────────────────────
     # app_write is the role used by the main application service. It gets
     # full DML on all domain tables; audit_log is restricted below.
-    op.execute("""
-        GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO app_write;
-        GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO app_write;
-    """)
+    op.execute("GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO app_write;")
+    op.execute("GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO app_write;")
 
     # ── 3. Revoke all mutating privileges on audit_log from app_write ─────
     # Defence-in-depth layer complementing the RLS policy below.
@@ -101,10 +99,8 @@ def downgrade() -> None:
     op.execute("REVOKE SELECT ON audit_log FROM compliance_reader;")
     op.execute("REVOKE INSERT ON audit_log FROM audit_writer;")
 
-    op.execute("""
-        REVOKE SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public FROM app_write;
-        REVOKE USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public FROM app_write;
-    """)
+    op.execute("REVOKE SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public FROM app_write;")
+    op.execute("REVOKE USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public FROM app_write;")
 
     op.execute("""
         DO $$

@@ -115,7 +115,8 @@ SELECT cron.schedule(
 
 def upgrade() -> None:
     # ── 1. Ensure pg_cron extension is installed (Cloud SQL: enable via flag) ─
-    op.execute("CREATE EXTENSION IF NOT EXISTS pg_cron;")
+    # pg_cron already enabled in postgres database
+    # op.execute("CREATE EXTENSION IF NOT EXISTS pg_cron;")
 
     # ── 2. Create the PL/pgSQL archival function ──────────────────────────────
     op.execute(_ARCHIVE_FUNCTION_SQL)

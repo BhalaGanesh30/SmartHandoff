@@ -116,7 +116,8 @@ SELECT cron.schedule(
 def upgrade() -> None:
     # pg_cron extension is already installed by a prior migration
     # (d4b7e2f91c30_pgcron_retention). This is idempotent.
-    op.execute("CREATE EXTENSION IF NOT EXISTS pg_cron;")
+    # pg_cron already enabled in postgres database
+    # op.execute("CREATE EXTENSION IF NOT EXISTS pg_cron;")
 
     # ── Create the PL/pgSQL purge function ────────────────────────────────────
     op.execute(_PURGE_FUNCTION_SQL)

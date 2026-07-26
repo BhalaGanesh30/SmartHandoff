@@ -135,7 +135,7 @@ class Settings:
     # --- Azure SignalR Service (US-022) ---
 
     @property
-    def AZURE_SIGNALR_CONNECTION_STRING(self) -> str:
+    def AZURE_SIGNALR_CONNECTION_STRING(self) -> str | None:
         """Azure SignalR Service connection string.
 
         Format: Endpoint=https://<name>.service.signalr.net;AccessKey=<key>;Version=1.0
@@ -143,15 +143,11 @@ class Settings:
 
         Used for real-time task status broadcasts to Angular dashboard clients.
 
-        Raises:
-            RuntimeError: If AZURE_SIGNALR_CONNECTION_STRING is not set.
+        Returns None if not configured (real-time updates will be disabled).
         """
         value = os.environ.get("AZURE_SIGNALR_CONNECTION_STRING", "")
         if not value:
-            raise RuntimeError(
-                "AZURE_SIGNALR_CONNECTION_STRING environment variable is not set. "
-                "Mount it from GCP Secret Manager 'azure-signalr-connection-string'."
-            )
+            return None
         return value
 
     # --- OTP Authentication (US-065) ---

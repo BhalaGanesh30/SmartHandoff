@@ -34,7 +34,8 @@ def upgrade() -> None:
     # Idempotent — safe to run on re-deploy.
     # US-008/TASK-003 may have already created this extension; IF NOT EXISTS
     # ensures this migration is safe to apply in any order.
-    op.execute("CREATE EXTENSION IF NOT EXISTS pg_cron;")
+    # pg_cron already enabled in postgres database
+    # op.execute("CREATE EXTENSION IF NOT EXISTS pg_cron;")
 
     # ── Schedule mv_bed_board refresh — every 1 minute ───────────────────────
     # CONCURRENTLY avoids locking reads during refresh.
