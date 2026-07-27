@@ -9,6 +9,7 @@ from __future__ import annotations
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import Response
 from prometheus_client import CONTENT_TYPE_LATEST, generate_latest
 
@@ -72,6 +73,18 @@ async def lifespan(app: FastAPI):
 app = FastAPI(
     title="SmartHandoff API",
     lifespan=lifespan,
+)
+
+# ── CORS Middleware ──────────────────────────────────────────────────────────
+# Allows frontend (Angular app) to call the API from a different origin.
+# Must be added FIRST so it's the outermost middleware (processes preflight OPTIONS).
+settings = get_settings()
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=settings.CORS_ORIGINS,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 # HIPAA audit logging middleware — must be registered after JWT validation
