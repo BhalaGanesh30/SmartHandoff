@@ -43,8 +43,8 @@ export class LoginComponent implements OnInit {
       code_challenge_method: 'S256',
     });
 
-    // Firebase/Identity Platform OAuth endpoint
-    window.location.href = `${environment.idpBaseUrl}/__/auth/handler?${params.toString()}`;
+    // Google OAuth 2.0 authorization endpoint
+    window.location.href = `${environment.idpBaseUrl}/o/oauth2/v2/auth?${params.toString()}`;
   }
 
   async #generatePkce(): Promise<{ codeVerifier: string; codeChallenge: string }> {

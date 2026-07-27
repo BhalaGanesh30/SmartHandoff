@@ -101,7 +101,7 @@ export class LoginCallbackComponent implements OnInit {
 
     const tokenResponse = await firstValueFrom(
       this.http.post<OidcTokenResponse>(
-        `${environment.idpBaseUrl}/token`,
+        'https://oauth2.googleapis.com/token',  // Google's OAuth 2.0 token endpoint
         body.toString(),
         { headers: { 'Content-Type': 'application/x-www-form-urlencoded' } },
       )

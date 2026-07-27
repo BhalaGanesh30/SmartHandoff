@@ -1,7 +1,7 @@
 export const environment = {
   production: true,
   apiBaseUrl: '',          // Same origin — served behind Cloud CDN
-  // Firebase Authentication (Google Identity Platform)
-  idpBaseUrl: 'https://smarthandoff.firebaseapp.com',
-  oidcClientId: 'AIzaSyBc91kHBPt3bjXApX-hYUd_qj6S5TQQtyQ',
+  // Google OAuth 2.0 Configuration
+  idpBaseUrl: 'https://accounts.google.com',
+  oidcClientId: '52528248131-kdk6um989bnrr80v61890b3kpeqqm5nt.apps.googleusercontent.com',
 };
