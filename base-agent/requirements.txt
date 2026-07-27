@@ -1,0 +1,8 @@
+# Base agent runtime dependencies
+pydantic>=2.0.0
+redis[asyncio]>=5.0.0
+google-cloud-pubsub>=2.18.0
+sqlalchemy[asyncio]>=2.0.0
+asyncpg>=0.29.0
+langchain-google-vertexai>=1.0.0
+httpx>=0.25.0

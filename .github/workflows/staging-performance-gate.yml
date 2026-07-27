@@ -1,0 +1,319 @@
+name: Staging Performance Gate - p95 Latency SLA
+
+on:
+  workflow_dispatch:
+    inputs:
+      log_level:
+        description: 'Log level for test execution'
+        required: false
+        default: 'info'
+        type: choice
+        options:
+          - debug
+          - info
+          - warning
+  push:
+    branches:
+      - main
+    paths:
+      - 'backend/agents/documentation/**'
+      - 'backend/tests/performance/**'
+      - '.github/workflows/staging-performance-gate.yml'
+  schedule:
+    # Run daily at 2 AM UTC (off-peak hours)
+    - cron: '0 2 * * *'
+
+env:
+  PYTHON_VERSION: '3.11'
+  STAGING_GCP_PROJECT_ID: ${{ secrets.STAGING_GCP_PROJECT_ID }}
+  STAGING_GCP_REGION: 'us-central1'
+
+jobs:
+  performance-test:
+    name: Run p95 Latency Performance Test
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: 'pip'
+          cache-dependency-path: 'backend/requirements*.txt'
+      
+      - name: Install dependencies
+        run: |
+          cd backend
+          pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install -r requirements-dev.txt
+      
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.STAGING_GCP_SA_KEY }}
+      
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+        with:
+          project_id: ${{ secrets.STAGING_GCP_PROJECT_ID }}
+      
+      - name: Configure staging environment
+        run: |
+          cd backend
+          cat > .env.staging <<EOF
+          STAGING_GCP_PROJECT_ID=${{ secrets.STAGING_GCP_PROJECT_ID }}
+          STAGING_GCP_REGION=${{ env.STAGING_GCP_REGION }}
+          STAGING_FHIR_BASE_URL=${{ secrets.STAGING_FHIR_BASE_URL }}
+          STAGING_FHIR_CLIENT_ID=${{ secrets.STAGING_FHIR_CLIENT_ID }}
+          STAGING_FHIR_CLIENT_SECRET=${{ secrets.STAGING_FHIR_CLIENT_SECRET }}
+          STAGING_DATABASE_URL=${{ secrets.STAGING_DATABASE_URL }}
+          EOF
+      
+      - name: Verify staging environment
+        run: |
+          cd backend
+          python tests/performance/validate_staging_env.py || true
+      
+      - name: Run performance test (p95 < 30 seconds)
+        id: perf_test
+        run: |
+          cd backend
+          set -a
+          source .env.staging
+          set +a
+          
+          # Run performance test with timeout
+          pytest tests/performance/test_discharge_summary_p95.py \
+            -v \
+            --timeout=600 \
+            --tb=short \
+            --junit-xml=test-results/performance-results.xml \
+            2>&1 | tee performance-test.log
+      
+      - name: Extract latency metrics
+        if: always()
+        id: metrics
+        run: |
+          cd backend
+          
+          # Extract p95 from test output
+          P95=$(grep -oP 'p95\s*:\s*\K\d+' performance-test.log | tail -1)
+          P50=$(grep -oP 'p50\s*:\s*\K\d+' performance-test.log | tail -1)
+          MEAN=$(grep -oP 'mean\s*:\s*\K\d+' performance-test.log | tail -1)
+          FALLBACK_COUNT=$(grep -oP 'fallback count:\s*\K\d+' performance-test.log | tail -1)
+          
+          echo "p95_ms=${P95}" >> $GITHUB_OUTPUT
+          echo "p50_ms=${P50}" >> $GITHUB_OUTPUT
+          echo "mean_ms=${MEAN}" >> $GITHUB_OUTPUT
+          echo "fallback_count=${FALLBACK_COUNT}" >> $GITHUB_OUTPUT
+          
+          # Log metrics
+          echo "📊 Performance Metrics:"
+          echo "  p50: ${P50} ms"
+          echo "  p95: ${P95} ms"
+          echo "  mean: ${MEAN} ms"
+          echo "  fallback count: ${FALLBACK_COUNT}"
+      
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: performance-test-results
+          path: |
+            backend/test-results/
+            backend/performance-test.log
+          retention-days: 30
+      
+      - name: Send metrics to Cloud Monitoring
+        if: always()
+        run: |
+          cd backend
+          
+          # Send p95 latency metric
+          gcloud monitoring time-series create \
+            --project=${{ secrets.STAGING_GCP_PROJECT_ID }} \
+            --metric-type=custom.googleapis.com/smarthandoff/discharge_summary_p95_latency_ms \
+            --metric-kind=GAUGE \
+            --value-type=DOUBLE \
+            --metric-labels=environment=staging,test_type=performance \
+            --value=${{ steps.metrics.outputs.p95_ms }} \
+            --timestamp=$(date --utc +%Y-%m-%dT%H:%M:%SZ) || true
+      
+      - name: Comment on PR with results
+        if: github.event_name == 'pull_request' && always()
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const p95 = '${{ steps.metrics.outputs.p95_ms }}';
+            const p50 = '${{ steps.metrics.outputs.p50_ms }}';
+            const mean = '${{ steps.metrics.outputs.mean_ms }}';
+            const threshold = 30000;
+            const passed = parseInt(p95) < threshold;
+            
+            const status = passed ? '✅ PASSED' : '❌ FAILED';
+            const emoji = passed ? '🎉' : '⚠️';
+            
+            const body = `
+            ## ${emoji} Performance Test Results
+            
+            **Status:** ${status}
+            
+            ### Discharge Summary Generation Latency
+            
+            | Metric | Value | Threshold |
+            |--------|-------|-----------|
+            | p50 | ${p50} ms | - |
+            | **p95** | **${p95} ms** | **30,000 ms** |
+            | mean | ${mean} ms | - |
+            | Fallback count | ${{ steps.metrics.outputs.fallback_count }} | - |
+            
+            ${passed ? 
+              '✅ **p95 latency is within SLA requirements**' : 
+              '❌ **p95 latency exceeds SLA threshold!**'}
+            
+            ### Test Details
+            - Test cases: 100
+            - Concurrency: 10 batches × 10 calls
+            - Environment: Staging
+            - LLM: Vertex AI Gemini 1.5 Pro
+            
+            [View full test results](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})
+            `;
+            
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: body
+            });
+      
+      - name: Fail on SLA breach
+        if: always()
+        run: |
+          P95=${{ steps.metrics.outputs.p95_ms }}
+          THRESHOLD=30000
+          
+          if [ -z "$P95" ]; then
+            echo "❌ Failed to extract p95 metric from test output"
+            exit 1
+          fi
+          
+          if [ $P95 -ge $THRESHOLD ]; then
+            echo "❌ SLA breach: p95 latency ${P95}ms exceeds threshold ${THRESHOLD}ms"
+            exit 1
+          fi
+          
+          echo "✅ SLA met: p95 latency ${P95}ms < ${THRESHOLD}ms"
+      
+      - name: Notify on failure
+        if: failure()
+        uses: slackapi/slack-github-action@v1
+        with:
+          webhook-url: ${{ secrets.SLACK_PERFORMANCE_WEBHOOK }}
+          payload: |
+            {
+              "text": "⚠️ Performance Test Failed",
+              "blocks": [
+                {
+                  "type": "header",
+                  "text": {
+                    "type": "plain_text",
+                    "text": "⚠️ Staging Performance Gate Failed"
+                  }
+                },
+                {
+                  "type": "section",
+                  "fields": [
+                    {
+                      "type": "mrkdwn",
+                      "text": "*Repository:*\n${{ github.repository }}"
+                    },
+                    {
+                      "type": "mrkdwn",
+                      "text": "*Branch:*\n${{ github.ref_name }}"
+                    },
+                    {
+                      "type": "mrkdwn",
+                      "text": "*p95 Latency:*\n${{ steps.metrics.outputs.p95_ms }}ms (threshold: 30,000ms)"
+                    },
+                    {
+                      "type": "mrkdwn",
+                      "text": "*Triggered by:*\n${{ github.actor }}"
+                    }
+                  ]
+                },
+                {
+                  "type": "actions",
+                  "elements": [
+                    {
+                      "type": "button",
+                      "text": {
+                        "type": "plain_text",
+                        "text": "View Logs"
+                      },
+                      "url": "https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+                    }
+                  ]
+                }
+              ]
+            }
+
+  trend-analysis:
+    name: Performance Trend Analysis
+    runs-on: ubuntu-latest
+    needs: performance-test
+    if: always()
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Download test results
+        uses: actions/download-artifact@v4
+        with:
+          name: performance-test-results
+          path: test-results/
+      
+      - name: Analyze performance trends
+        run: |
+          echo "📈 Analyzing performance trends..."
+          echo "TODO: Implement trend analysis comparing last 30 days of p95 metrics"
+          # This would typically query Cloud Monitoring for historical data
+          # and detect regression patterns
+
+  summary:
+    name: Staging Gate Summary
+    runs-on: ubuntu-latest
+    needs: [performance-test, trend-analysis]
+    if: always()
+    
+    steps:
+      - name: Generate summary
+        run: |
+          echo "## Staging Performance Gate Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          if [ "${{ needs.performance-test.result }}" == "success" ]; then
+            echo "✅ **Performance test passed**" >> $GITHUB_STEP_SUMMARY
+            echo "- p95 latency is within SLA requirements (<30 seconds)" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ **Performance test failed**" >> $GITHUB_STEP_SUMMARY
+            echo "- p95 latency exceeded SLA threshold" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Next Steps" >> $GITHUB_STEP_SUMMARY
+          
+          if [ "${{ needs.performance-test.result }}" == "success" ]; then
+            echo "- ✅ Ready for production deployment" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "- ⚠️ Review performance test logs" >> $GITHUB_STEP_SUMMARY
+            echo "- ⚠️ Investigate latency regression" >> $GITHUB_STEP_SUMMARY
+            echo "- ⚠️ Optimize before deploying to production" >> $GITHUB_STEP_SUMMARY
+          fi

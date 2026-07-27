@@ -1,0 +1,20 @@
+[build-system]
+requires = ["setuptools>=70"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "agent-base"
+version = "0.1.0"
+description = "SmartHandoff shared LangChain base agent library"
+requires-python = ">=3.12"
+dependencies = [
+    "google-cloud-pubsub>=2.26.1",
+    "langchain>=0.2.16",
+    "langchain-google-vertexai>=1.0.10",
+    "pydantic>=2.9.2",
+    "prometheus-client>=0.21.0",
+]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["agent_base*"]

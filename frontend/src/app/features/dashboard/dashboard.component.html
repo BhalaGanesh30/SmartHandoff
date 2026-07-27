@@ -1,0 +1,103 @@
+<div class="dashboard-container">
+  <!-- Header -->
+  <header class="dashboard-header">
+    <h1>Care Team Dashboard</h1>
+    <div class="header-actions">
+      <button 
+        class="btn-refresh" 
+        (click)="refreshTasks()"
+        [disabled]="isLoading()"
+        aria-label="Refresh tasks">
+        {{ isLoading() ? 'Loading...' : 'Refresh' }}
+      </button>
+      
+      @if (isReconnecting()) {
+        <div class="reconnecting-indicator" role="status">
+          <span class="spinner"></span>
+          <span>Reconnecting...</span>
+        </div>
+      }
+    </div>
+  </header>
+
+  <!-- Error Banner -->
+  @if (errorMessage()) {
+    <div class="alert alert-error" role="alert">
+      <strong>Error:</strong> {{ errorMessage() }}
+      <button 
+        class="btn-dismiss" 
+        (click)="errorMessage.set(null)"
+        aria-label="Dismiss error">
+        ×
+      </button>
+    </div>
+  }
+
+  <!-- Loading State -->
+  @if (isLoading()) {
+    <div class="loading-state" role="status">
+      <div class="spinner-large"></div>
+      <p>Loading tasks...</p>
+    </div>
+  }
+
+  <!-- Dashboard Content -->
+  @if (!isLoading() && !errorMessage()) {
+    <div class="dashboard-content">
+      
+      <!-- Task Summary Cards -->
+      <section class="task-summary">
+        <div class="summary-card">
+          <h3>Pending</h3>
+          <div class="count">{{ pendingTasks().length }}</div>
+        </div>
+        <div class="summary-card">
+          <h3>In Progress</h3>
+          <div class="count">{{ inProgressTasks().length }}</div>
+        </div>
+        <div class="summary-card">
+          <h3>Completed</h3>
+          <div class="count">{{ completedTasks().length }}</div>
+        </div>
+      </section>
+
+      <!-- Tasks by Role -->
+      <section class="tasks-by-role">
+        <h2>Tasks by Care Team Role</h2>
+        
+        @for (roleEntry of tasksByRole() | keyvalue; track roleEntry.key) {
+          <div class="role-section">
+            <h3 class="role-title">{{ roleEntry.key | titlecase }}</h3>
+            <div class="task-list">
+              @for (task of roleEntry.value; track task.id) {
+                <div class="task-card" [class]="'status-' + task.status.toLowerCase()">
+                  <div class="task-header">
+                    <span class="task-type">{{ task.agent_type }}</span>
+                    <span class="task-status">{{ task.status }}</span>
+                  </div>
+                  <div class="task-meta">
+                    <span>Started: {{ task.start_time | date:'short' }}</span>
+                    @if (task.completed_time) {
+                      <span>Completed: {{ task.completed_time | date:'short' }}</span>
+                    }
+                  </div>
+                  @if (task.unit_id) {
+                    <div class="task-unit">Unit: {{ task.unit_id }}</div>
+                  }
+                </div>
+              }
+              
+              @if (roleEntry.value.length === 0) {
+                <p class="no-tasks">No tasks for this role</p>
+              }
+            </div>
+          </div>
+        }
+        
+        @if (tasksByRole().size === 0) {
+          <p class="no-tasks">No tasks found for this encounter</p>
+        }
+      </section>
+    </div>
+  }
+</div>

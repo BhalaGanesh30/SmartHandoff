@@ -1,0 +1,21 @@
+# config/sendgrid_templates.yaml
+#
+# SendGrid Dynamic Template ID registry.
+# DO NOT edit manually — this file is updated automatically by
+# notifications/upload_sendgrid_templates.py during CI/CD deployment.
+#
+# Template IDs are populated at deploy time. Placeholder values below
+# are intentional; the script overwrites them on first deploy.
+#
+# Usage (notification dispatcher):
+#   from app.config import sendgrid_templates
+#   template_id = sendgrid_templates["patient_portal_link"]
+#
+# Refs: US-066 DoD, US-064 TASK-004
+
+patient_portal_link: ""
+appointment_reminder: ""
+medication_reminder: ""
+care_team_escalation: ""
+ed_boarding_alert: ""
+housekeeping_notification: ""
