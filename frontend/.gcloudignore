@@ -1,0 +1,10 @@
+# Cloud Build ignore file
+# Only exclude generated/cached files, NOT source files
+node_modules/
+dist/
+.angular/
+.git/
+coverage/
+*.log
+.vscode/
+.idea/
