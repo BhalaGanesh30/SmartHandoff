@@ -25,7 +25,10 @@ from app.api.v1.routers.patients import router as patients_router
 from app.api.v1.routers.encounters import router as encounters_router
 from app.api.v1.routers.encounter_tasks import router as encounter_tasks_router
 from app.api.v1.routers.documents import router as documents_router
-from app.api.v1.routers.medications import router as medications_router
+from app.api.v1.routers.medications import (
+    router as medications_router,
+    encounters_medications_router,
+)
 from app.api.v1.routers.alerts import router as alerts_router
 from app.api.v1.routers.beds import router as beds_router
 from app.api.v1.routers.analytics import router as analytics_router
@@ -98,6 +101,7 @@ app.include_router(encounters_router, prefix="/api/v1")
 app.include_router(encounter_tasks_router, prefix="/api/v1")
 app.include_router(documents_router, prefix="/api/v1")
 app.include_router(medications_router, prefix="/api/v1")
+app.include_router(encounters_medications_router, prefix="/api/v1")  # US-030: encounter medication reconciliation
 app.include_router(alerts_router, prefix="/api/v1")
 app.include_router(beds_router, prefix="/api/v1")
 app.include_router(analytics_router, prefix="/api/v1")
