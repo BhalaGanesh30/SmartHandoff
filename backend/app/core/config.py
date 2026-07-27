@@ -112,6 +112,42 @@ class Settings:
         """
         return os.environ.get("FHIR_MRN_SYSTEM", "http://hospital.org/mrn")
 
+    # --- RxNav API (US-030 TASK-003) ---
+
+    @property
+    def RXNAV_BASE_URL(self) -> str:
+        """Base URL for NIH RxNav REST API.
+
+        Used for RxNorm CUI lookups during medication reconciliation.
+        Public API, no authentication required.
+
+        Default: https://rxnav.nlm.nih.gov/REST
+
+        Can be overridden via RXNAV_BASE_URL environment variable for
+        testing or alternative RxNav deployments.
+        """
+        return os.environ.get(
+            "RXNAV_BASE_URL", "https://rxnav.nlm.nih.gov/REST"
+        )
+
+    @property
+    def RXNAV_TIMEOUT_SECONDS(self) -> int:
+        """HTTP timeout for RxNav CUI lookup requests (in seconds).
+
+        Default: 5 seconds
+
+        RxNav API is public and generally fast, but timeouts can occur.
+        Non-fatal failures (return None for CUI) to allow reconciliation
+        to proceed with name-based matching as fallback.
+
+        Can be overridden via RXNAV_TIMEOUT_SECONDS environment variable.
+        """
+        value = os.environ.get("RXNAV_TIMEOUT_SECONDS", "5")
+        try:
+            return int(value)
+        except ValueError:
+            return 5
+
     # --- GCP Configuration (US-019) ---
 
     @property
