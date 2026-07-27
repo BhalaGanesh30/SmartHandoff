@@ -1,6 +1,7 @@
 export const environment = {
   production: true,
   apiBaseUrl: '',          // Same origin — served behind Cloud CDN
-  idpBaseUrl: '#{IDP_BASE_URL}#',    // Token replaced by Cloud Build substitution
-  oidcClientId: '#{OIDC_CLIENT_ID}#',
+  // Google OAuth Configuration
+  idpBaseUrl: 'https://accounts.google.com',
+  oidcClientId: '52528248131-kdk6um989bnrr80v61890b3kpeqqm5nt.apps.googleusercontent.com',
 };
