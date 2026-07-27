@@ -46,6 +46,16 @@ class TokenResponse(BaseModel):
     expires_in: int = Field(default=28800, description="Token validity in seconds (8h)")
 
 
+@router.options(
+    "/token",
+    summary="CORS preflight for token endpoint",
+    include_in_schema=False,
+)
+async def token_options():
+    """Handle CORS preflight OPTIONS request."""
+    return {"status": "ok"}
+
+
 @router.post(
     "/token",
     response_model=TokenResponse,
@@ -86,6 +96,16 @@ async def exchange_token(
 
 
 # ── POST /api/v1/auth/logout ──────────────────────────────────────────────────
+
+@router.options(
+    "/logout",
+    summary="CORS preflight for logout endpoint",
+    include_in_schema=False,
+)
+async def logout_options():
+    """Handle CORS preflight OPTIONS request."""
+    return {"status": "ok"}
+
 
 @router.post(
     "/logout",
@@ -175,6 +195,16 @@ def _get_client_id() -> str:
     if not client_id:
         raise RuntimeError("OIDC_CLIENT_ID environment variable is not set.")
     return client_id
+
+
+@router.options(
+    "/exchange-code",
+    summary="CORS preflight for exchange-code endpoint",
+    include_in_schema=False,
+)
+async def exchange_code_options():
+    """Handle CORS preflight OPTIONS request."""
+    return {"status": "ok"}
 
 
 @router.post(
