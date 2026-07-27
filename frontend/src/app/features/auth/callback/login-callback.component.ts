@@ -90,25 +90,22 @@ export class LoginCallbackComponent implements OnInit {
       throw new Error('PKCE code_verifier missing from session storage');
     }
 
-    // Exchange code for tokens at IdP token endpoint
-    const body = new URLSearchParams({
-      grant_type: 'authorization_code',
+    // Exchange code for tokens via backend (secure - keeps client_secret on server)
+    const codeExchangeBody = {
       code,
-      redirect_uri: `${window.location.origin}/auth/callback`,
-      client_id: environment.oidcClientId,
       code_verifier: codeVerifier,
-    });
+      redirect_uri: `${window.location.origin}/auth/callback`,
+    };
 
     const tokenResponse = await firstValueFrom(
-      this.http.post<OidcTokenResponse>(
-        'https://oauth2.googleapis.com/token',  // Google's OAuth 2.0 token endpoint
-        body.toString(),
-        { headers: { 'Content-Type': 'application/x-www-form-urlencoded' } },
+      this.http.post<{ access_token: string; token_type: string; expires_in: number }>(
+        `${environment.apiBaseUrl}/api/v1/auth/exchange-code`,
+        codeExchangeBody,
       )
     );
 
-    // Exchange OIDC id_token for SmartHandoff app JWT
-    await this.authService.exchangeIdToken(tokenResponse.id_token);
+    // Store the SmartHandoff application JWT
+    this.authService.setToken(tokenResponse.access_token);
 
     // Clean up PKCE artefacts — they are single-use only
     sessionStorage.removeItem('pkce_code_verifier');
