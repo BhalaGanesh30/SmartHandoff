@@ -7,8 +7,8 @@ sprint: 2
 layer: Backend
 estimate: 3h
 priority: Must Have
-status: Draft
-date: 2026-07-16
+status: Complete
+date: 2026-07-28
 assignee: Backend Engineer
 upstream: [US-001]
 ---
@@ -16,7 +16,7 @@ upstream: [US-001]
 # TASK-001: Brand Name Redis Cache Layer + RxNav `getDisplayTerms` Client
 
 > **Story:** US-033 | **Epic:** EP-005 | **Sprint:** 2 | **Layer:** Backend | **Est:** 3 h  
-> **Status:** Draft | **Date:** 2026-07-16
+> **Status:** Complete | **Date:** 2026-07-28
 
 ---
 
@@ -307,19 +307,19 @@ class BrandNameEnricher:
 
 ## Validation
 
-- [ ] `BrandNameCache.get()` returns `None` on cache miss; returns dict on hit
-- [ ] `BrandNameCache.set()` stores JSON with TTL = 604 800 s (7 days)
-- [ ] `fetch_brand_name()` returns first BN concept name from RxNav response
-- [ ] `fetch_brand_name()` returns `None` gracefully for generic-only drugs (no BN group)
-- [ ] `fetch_brand_name()` raises `RxNavBrandNameError` on HTTP 4xx / 5xx
-- [ ] `BrandNameEnricher.enrich()` does NOT call RxNav when cache hit
-- [ ] No PHI in cache keys or values (only RxCUI + brand name string)
+- [x] `BrandNameCache.get()` returns `None` on cache miss; returns dict on hit
+- [x] `BrandNameCache.set()` stores JSON with TTL = 604 800 s (7 days)
+- [x] `fetch_brand_name()` returns first BN concept name from RxNav response
+- [x] `fetch_brand_name()` returns `None` gracefully for generic-only drugs (no BN group)
+- [x] `fetch_brand_name()` raises `RxNavBrandNameError` on HTTP 4xx / 5xx
+- [x] `BrandNameEnricher.enrich()` does NOT call RxNav when cache hit
+- [x] No PHI in cache keys or values (only RxCUI + brand name string)
 
 ---
 
 ## Definition of Done
 
-- [ ] All four files created and peer-reviewed
-- [ ] `get_redis` dependency factory from US-031 TASK-001 reused (no duplication)
-- [ ] Unit tests written in TASK-006
-- [ ] No secrets in code; RxNav is a public API — no auth key required
+- [x] All four files created and peer-reviewed
+- [x] `get_redis` dependency factory from US-031 TASK-001 reused (no duplication)
+- [x] Unit tests written in TASK-006
+- [x] No secrets in code; RxNav is a public API — no auth key required

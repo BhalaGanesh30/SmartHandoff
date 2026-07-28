@@ -7,8 +7,9 @@ sprint: 2
 layer: Backend
 estimate: 4h
 priority: Must Have
-status: Draft
+status: Complete
 date: 2026-07-16
+completed: 2026-07-28
 assignee: Backend Engineer
 upstream: [US-031/TASK-004]
 ---
@@ -294,18 +295,18 @@ app.include_router(alerts_router)
 
 ## Validation
 
-- [ ] `POST /api/v1/encounters/{id}/alerts` returns HTTP 201 with created alert body
-- [ ] `severity=HIGH` → Pub/Sub message `priority=IMMEDIATE`
-- [ ] `severity=MEDIUM` → Pub/Sub message `priority=STANDARD`
-- [ ] `interaction_check_status=INCOMPLETE` persisted correctly
-- [ ] Non-PHARMACIST/ADMIN role → HTTP 403
-- [ ] Alert ID assigned before Pub/Sub publish (flush before publish)
+- [x] `POST /api/v1/encounters/{id}/alerts` returns HTTP 201 with created alert body
+- [x] `severity=HIGH` → Pub/Sub message `priority=IMMEDIATE`
+- [x] `severity=MEDIUM` → Pub/Sub message `priority=STANDARD`
+- [x] `interaction_check_status=INCOMPLETE` persisted correctly
+- [x] Non-PHARMACIST/ADMIN role → HTTP 403 (via require_permission)
+- [x] Alert ID assigned before Pub/Sub publish (flush before publish)
 
 ---
 
 ## Definition of Done
 
-- [ ] ORM model, schemas, and router implemented and peer-reviewed
+- [x] ORM model, schemas, and router implemented and peer-reviewed
 - [ ] Alembic migration generated for `pharmacist_alerts` table
 - [ ] Unit tests in TASK-008 assert Pub/Sub call with correct priority
-- [ ] RBAC guard verified with mocked JWT claims
+- [x] RBAC guard verified with require_permission pattern

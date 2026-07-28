@@ -254,3 +254,37 @@ async def get_async_session() -> AsyncGenerator[AsyncSession, None]:
         except Exception:
             await session.rollback()
             raise
+
+
+# ── Context manager for standalone scripts / jobs ────────────────────────────
+
+
+class get_db_session_context:
+    """Async context manager for standalone scripts and Cloud Run jobs.
+
+    Provides a write session with automatic rollback on exceptions.
+    Does NOT auto-commit — caller must explicitly call commit().
+
+    Usage::
+
+        async with get_db_session_context() as db:
+            # ... perform database operations ...
+            await db.commit()
+    """
+
+    def __init__(self) -> None:
+        self._session: AsyncSession | None = None
+
+    async def __aenter__(self) -> AsyncSession:
+        if write_session_factory is None:
+            raise RuntimeError(
+                "write_session_factory is not initialised. "
+                "Ensure create_db_engines() is called before using this context."
+            )
+        self._session = write_session_factory()
+        return await self._session.__aenter__()
+
+    async def __aexit__(self, exc_type, exc_val, exc_tb):  # type: ignore[no-untyped-def]
+        if self._session is not None:
+            return await self._session.__aexit__(exc_type, exc_val, exc_tb)
+        return None

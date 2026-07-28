@@ -1,27 +1,33 @@
-"""Medication Reconciliation Agent — three-way FHIR comparison.
+"""Medication Reconciliation Agent — three-way FHIR comparison with drug interaction checking.
 
 US-030 TASK-004: Implements the MedicationReconciliationAgent that orchestrates
 the FHIR fetch → normalisation → three-way comparison pipeline, applies duplicate
 and missing-chronic-medication detection, and persists categorised results to
 the medication table.
 
+US-031 TASK-007: Integrates DrugInteractionChecker pipeline after normalisation
+to detect drug-drug interactions and create pharmacist alerts via the REST API.
+
 Design refs:
     - US-030 TASK-004 — MedicationReconciliationAgent implementation
     - US-030 TASK-002 — FHIRMedicationFetcher
     - US-030 TASK-003 — RxNormNormaliser, DoseParser
     - US-030 TASK-001 — Medication ORM model
+    - US-031 TASK-007 — Drug interaction pipeline integration
     - US-024 — BaseAgent framework
 """
 from __future__ import annotations
 
 import logging
+import uuid
 from collections import defaultdict
 from datetime import datetime, timezone
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
+import httpx
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from backend.agents.base_agent import BaseAgent
+from agents.base_agent import BaseAgent
 from app.models.medication import (
     Medication,
     MedicationListSource,
@@ -32,6 +38,14 @@ from app.agents.medication_reconciliation.fhir_fetcher import FHIRMedicationFetc
 from app.agents.medication_reconciliation.models import RawMedicationEntry
 from app.agents.medication_reconciliation.rxnorm import RxNormNormaliser
 from app.agents.medication_reconciliation.dose_parser import parse_dose
+from app.agents.medication_reconciliation.interaction_pipeline import InteractionPipeline
+from app.agents.medication_reconciliation.drug_interaction.checker import (
+    DischargedMedication,
+    DrugInteractionChecker,
+)
+from app.agents.medication_reconciliation.drug_interaction.cache import DrugInteractionCache
+from app.agents.medication_reconciliation.drug_interaction.rxnav_client import RxNavInteractionClient
+from app.agents.medication_reconciliation.drug_interaction.openfda_client import OpenFDAInteractionClient
 
 if TYPE_CHECKING:
     pass
@@ -64,6 +78,9 @@ class MedicationReconciliationAgent(BaseAgent):
         fhir_fetcher: FHIRMedicationFetcher,
         normaliser: RxNormNormaliser,
         session: AsyncSession,
+        interaction_cache: DrugInteractionCache | None = None,
+        api_base_url: str = "http://localhost:8000",
+        api_client: httpx.AsyncClient | None = None,
     ) -> None:
         """Initialize the medication reconciliation agent.
 
@@ -71,6 +88,9 @@ class MedicationReconciliationAgent(BaseAgent):
             fhir_fetcher: Configured FHIRMedicationFetcher for retrieving medications
             normaliser: RxNormNormaliser for mapping drug names to CUIs
             session: Async SQLAlchemy session for database operations
+            interaction_cache: DrugInteractionCache for caching interaction results (optional)
+            api_base_url: Base URL for internal API calls (default: http://localhost:8000)
+            api_client: Pre-configured httpx.AsyncClient for API calls (optional)
         """
         # Initialize BaseAgent with a placeholder subscription_id
         # In production, this would be configured from settings
@@ -78,6 +98,25 @@ class MedicationReconciliationAgent(BaseAgent):
         self._fetcher = fhir_fetcher
         self._normaliser = normaliser
         self._session = session
+        
+        # Initialize interaction checking pipeline (US-031)
+        self._api_client = api_client or httpx.AsyncClient(base_url=api_base_url, timeout=30.0)
+        rxnav_client = RxNavInteractionClient(http_client=None)
+        openfda_client = OpenFDAInteractionClient(http_client=None)
+        
+        if interaction_cache is None:
+            # Default cache implementation - in production this would use Redis
+            interaction_cache = DrugInteractionCache()
+        
+        checker = DrugInteractionChecker(
+            cache=interaction_cache,
+            rxnav_client=rxnav_client,
+            openfda_client=openfda_client,
+        )
+        self._interaction_pipeline = InteractionPipeline(
+            checker=checker,
+            api_client=self._api_client,
+        )
 
     async def run(self, encounter_id: str) -> list[Medication]:
         """
@@ -87,6 +126,7 @@ class MedicationReconciliationAgent(BaseAgent):
         1. Fetch all three medication lists from FHIR
         2. Normalize all drug names to RxNorm CUIs
         3. Parse dose strings into structured values
+        3.5. Run drug-drug interaction checking (US-031)
         4. Perform three-way comparison and categorize
         5. Detect duplicates and missing chronic medications
         6. Create pharmacist alerts for flagged items
@@ -100,6 +140,7 @@ class MedicationReconciliationAgent(BaseAgent):
 
         Design refs:
             US-030 TASK-004 AC1-AC8
+            US-031 TASK-007 — Drug interaction pipeline integration
         """
         logger.info(
             "Starting medication reconciliation for encounter %s", encounter_id
@@ -119,6 +160,38 @@ class MedicationReconciliationAgent(BaseAgent):
         for entry in all_entries:
             entry.dose_value, entry.dose_unit = parse_dose(entry.dose_string)
             entry.rxnorm_cui = cui_map.get(entry.name)
+
+        # Step 3.5: Run drug-drug interaction checking (US-031)
+        discharge_entries = raw_lists.get(MedicationListSource.DISCHARGE, [])
+        discharge_meds = [
+            DischargedMedication(
+                rxcui=entry.rxnorm_cui or "",
+                drug_name=entry.name,
+            )
+            for entry in discharge_entries
+            if entry.rxnorm_cui  # Only check medications with valid RxCUIs
+        ]
+        
+        if discharge_meds:
+            try:
+                encounter_uuid = uuid.UUID(encounter_id) if isinstance(encounter_id, str) else encounter_id
+                interaction_summary = await self._interaction_pipeline.run(
+                    encounter_id=encounter_uuid,
+                    medications=discharge_meds,
+                )
+                logger.info(
+                    "Drug interaction check complete encounter_id=%s summary=%s",
+                    encounter_id,
+                    interaction_summary,
+                )
+            except Exception as e:
+                logger.error(
+                    "Drug interaction check failed encounter_id=%s error=%s",
+                    encounter_id,
+                    str(e),
+                    exc_info=True,
+                )
+                # Continue with reconciliation even if interaction check fails
 
         # Step 4: Three-way comparison
         medications = self._compare(raw_lists)

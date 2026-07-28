@@ -7,8 +7,8 @@ sprint: 2
 layer: Backend / AI
 estimate: 4h
 priority: Must Have
-status: Draft
-date: 2026-07-16
+status: Complete
+date: 2026-07-28
 assignee: AI/ML Engineer
 upstream: [US-033/TASK-001, US-033/TASK-002, US-030]
 ---
@@ -16,7 +16,7 @@ upstream: [US-033/TASK-001, US-033/TASK-002, US-030]
 # TASK-003: `MedicationSummaryGenerator` Class + Gemini Flash Prompt
 
 > **Story:** US-033 | **Epic:** EP-005 | **Sprint:** 2 | **Layer:** Backend / AI | **Est:** 4 h  
-> **Status:** Draft | **Date:** 2026-07-16
+> **Status:** Complete | **Date:** 2026-07-28
 
 ---
 
@@ -230,20 +230,20 @@ class MedicationSummaryGenerator:
 
 ## Validation
 
-- [ ] `MedicationSummaryGenerator.generate()` returns a `MedicationSummaryOutput` instance
-- [ ] Gemini Flash model name is `gemini-1.5-flash` (not Pro)
-- [ ] Brand name enrichment (`_enrich_medications`) called before prompt construction
-- [ ] `ValueError` raised if Gemini returns unparseable JSON (no silent swallowing)
-- [ ] Temperature = 0.2 (deterministic factual output)
-- [ ] System prompt instructs 6th-grade reading level and JSON-only output
-- [ ] Dosing instructions use the prescribed format: "Take X tablet(s) (Xmg) [frequency]"
+- [x] `MedicationSummaryGenerator.generate()` returns a `MedicationSummaryOutput` instance
+- [x] Gemini Flash model name is `gemini-1.5-flash` (not Pro)
+- [x] Brand name enrichment (`_enrich_medications`) called before prompt construction
+- [x] `ValueError` raised if Gemini returns unparseable JSON (no silent swallowing)
+- [x] Temperature = 0.2 (deterministic factual output)
+- [x] System prompt instructs 6th-grade reading level and JSON-only output
+- [x] Dosing instructions use the prescribed format: "Take X tablet(s) (Xmg) [frequency]"
 
 ---
 
 ## Definition of Done
 
-- [ ] `generator.py` implemented and peer-reviewed
-- [ ] Imports `BrandNameEnricher` from TASK-001 and `MedicationSummaryOutput` from TASK-002
-- [ ] LangChain `ainvoke` used for async Vertex AI call
-- [ ] Module-level docstring with `Design refs` complete
-- [ ] Unit tests written in TASK-006
+- [x] `generator.py` implemented and peer-reviewed
+- [x] Imports `BrandNameEnricher` from TASK-001 and `MedicationSummaryOutput` from TASK-002
+- [x] LangChain `ainvoke` used for async Vertex AI call
+- [x] Module-level docstring with `Design refs` complete
+- [x] Unit tests written in TASK-006

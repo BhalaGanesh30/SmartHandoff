@@ -24,6 +24,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.config.sla_loader import SLAConfig, load_sla_config
 from app.db.session import get_read_session, get_write_session
 from app.models.agent_task import AgentTask
+from app.monitor.medrec_sla_monitor import MedRecSLAMonitor
+from app.publisher.charge_pharmacist_escalation_publisher import (
+    ChargePharmacistEscalationPublisher,
+)
 from app.publisher.escalation_publisher import EscalationPublisher
 
 logger = logging.getLogger(__name__)
@@ -36,19 +40,28 @@ class SLAMonitor:
     """Scheduled SLA breach detector for AgentTask records.
 
     Usage (startup lifespan):
-        monitor = SLAMonitor(publisher=EscalationPublisher(...))
+        monitor = SLAMonitor(
+            publisher=EscalationPublisher(...),
+            medrec_publisher=ChargePharmacistEscalationPublisher(...),
+        )
         monitor.start()
         # on shutdown:
         monitor.shutdown()
     """
 
-    def __init__(self, publisher: EscalationPublisher) -> None:
+    def __init__(
+        self,
+        publisher: EscalationPublisher,
+        medrec_publisher: ChargePharmacistEscalationPublisher | None = None,
+    ) -> None:
         self._publisher = publisher
+        self._medrec_publisher = medrec_publisher
         self._config: SLAConfig = load_sla_config()
         self._scheduler = AsyncIOScheduler(timezone="UTC")
 
     def start(self) -> None:
-        """Register the monitor job and start the scheduler."""
+        """Register the monitor job(s) and start the scheduler."""
+        # US-021: Coordinator SLA job
         self._scheduler.add_job(
             self._run_check,
             trigger="interval",
@@ -57,9 +70,29 @@ class SLAMonitor:
             replace_existing=True,
             max_instances=1,  # prevent overlapping runs
         )
+        
+        # US-034: Medication reconciliation admission SLA job (second job, same scheduler)
+        if self._medrec_publisher is not None:
+            medrec_monitor = MedRecSLAMonitor(
+                publisher=self._medrec_publisher,
+                config=self._config,
+            )
+            self._scheduler.add_job(
+                medrec_monitor.run_check,
+                trigger="interval",
+                seconds=self._config.monitor_interval_seconds,
+                id="medrec_sla_check",
+                replace_existing=True,
+                max_instances=1,  # prevent overlapping runs
+                coalesce=True,
+            )
+            logger.info("SLAMonitor: registered medication reconciliation SLA job")
+        
         self._scheduler.start()
+        job_count = 2 if self._medrec_publisher is not None else 1
         logger.info(
-            "SLAMonitor started — polling every %d seconds",
+            "SLAMonitor started — %d job(s) registered, polling every %d seconds",
+            job_count,
             self._config.monitor_interval_seconds,
         )
 

@@ -7,8 +7,8 @@ sprint: 2
 layer: Backend
 estimate: 2h
 priority: Must Have
-status: Draft
-date: 2026-07-16
+status: Complete
+date: 2026-07-28
 assignee: Backend Engineer
 upstream: [US-021/TASK-002, US-030]
 ---
@@ -16,7 +16,7 @@ upstream: [US-021/TASK-002, US-030]
 # TASK-001: Add `sla_escalation_sent_at` Nullable Timestamp to `agent_task` via Alembic Migration
 
 > **Story:** US-034 | **Epic:** EP-005 | **Sprint:** 2 | **Layer:** Backend | **Est:** 2 h
-> **Status:** Draft | **Date:** 2026-07-16
+> **Status:** Complete | **Date:** 2026-07-28
 
 ---
 
@@ -152,9 +152,9 @@ WHERE table_name = 'agent_task'
 
 ## Definition of Done Checklist
 
-- [ ] `sla_escalation_sent_at` column added to `AgentTask` ORM model
-- [ ] Alembic migration generated and reviewed — contains `upgrade()` and `downgrade()`
-- [ ] Partial index `ix_agent_task_medrec_sla_pending` created for monitor poll query
-- [ ] Migration applied to local dev DB without errors
-- [ ] Schema verified with `\d agent_task` — column present and nullable
-- [ ] No other columns modified — surgical change only
+- [x] `sla_escalation_sent_at` column added to `AgentTask` ORM model
+- [x] Alembic migration generated and reviewed — contains `upgrade()` and `downgrade()`
+- [x] Partial index `ix_agent_task_medrec_sla_pending` created for monitor poll query
+- [x] Migration applied to local dev DB without errors
+- [x] Schema verified with `\d agent_task` — column present and nullable
+- [x] No other columns modified — surgical change only

@@ -16,12 +16,43 @@ from app.config.sla_loader import SLAConfig, load_sla_config
 @pytest.fixture
 def valid_yaml(tmp_path: Path) -> Path:
     content = textwrap.dedent("""\
-        sla_thresholds:
-          DOCUMENTATION: 30
-          MEDICATION_RECONCILIATION: 60
-          BED_MANAGEMENT: 15
-          FOLLOW_UP_CARE: 120
-          PATIENT_COMMUNICATION: 30
+        agents:
+          DOCUMENTATION:
+            threshold_minutes: 30
+            reference_field: created_at
+            escalation_type: SUPERVISOR_ESCALATION
+            priority: NORMAL
+            description: Clinical documentation completion SLA
+          MEDICATION_RECONCILIATION:
+            threshold_minutes: 60
+            reference_field: created_at
+            escalation_type: SUPERVISOR_ESCALATION
+            priority: NORMAL
+            description: Medication reconciliation task SLA
+          BED_MANAGEMENT:
+            threshold_minutes: 15
+            reference_field: created_at
+            escalation_type: SUPERVISOR_ESCALATION
+            priority: HIGH
+            description: Bed management SLA
+          FOLLOW_UP_CARE:
+            threshold_minutes: 120
+            reference_field: created_at
+            escalation_type: SUPERVISOR_ESCALATION
+            priority: NORMAL
+            description: Follow-up care SLA
+          PATIENT_COMMUNICATION:
+            threshold_minutes: 30
+            reference_field: created_at
+            escalation_type: SUPERVISOR_ESCALATION
+            priority: NORMAL
+            description: Patient communication SLA
+          MEDICATION_RECONCILIATION_ADMISSION:
+            threshold_minutes: 1440
+            reference_field: admit_time
+            escalation_type: CHARGE_PHARMACIST_ESCALATION
+            priority: HIGH
+            description: Admission medication reconciliation SLA
         monitor_interval_seconds: 300
         escalation_dedup_window_minutes: 30
     """)
@@ -53,8 +84,9 @@ def test_documentation_threshold_is_30(valid_yaml: Path) -> None:
 def test_missing_agent_type_raises(tmp_path: Path) -> None:
     """Fail-fast if a known agent type is absent from the YAML."""
     content = textwrap.dedent("""\
-        sla_thresholds:
-          DOCUMENTATION: 30
+        agents:
+          DOCUMENTATION:
+            threshold_minutes: 30
         monitor_interval_seconds: 300
         escalation_dedup_window_minutes: 30
     """)
@@ -67,12 +99,17 @@ def test_missing_agent_type_raises(tmp_path: Path) -> None:
 
 def test_zero_threshold_raises(tmp_path: Path) -> None:
     content = textwrap.dedent("""\
-        sla_thresholds:
-          DOCUMENTATION: 0
-          MEDICATION_RECONCILIATION: 60
-          BED_MANAGEMENT: 15
-          FOLLOW_UP_CARE: 120
-          PATIENT_COMMUNICATION: 30
+        agents:
+          DOCUMENTATION:
+            threshold_minutes: 0
+          MEDICATION_RECONCILIATION:
+            threshold_minutes: 60
+          BED_MANAGEMENT:
+            threshold_minutes: 15
+          FOLLOW_UP_CARE:
+            threshold_minutes: 120
+          PATIENT_COMMUNICATION:
+            threshold_minutes: 30
         monitor_interval_seconds: 300
         escalation_dedup_window_minutes: 30
     """)
@@ -87,3 +124,14 @@ def test_missing_file_raises(tmp_path: Path) -> None:
     load_sla_config.cache_clear()
     with pytest.raises(FileNotFoundError):
         load_sla_config(tmp_path / "nonexistent.yaml")
+
+
+def test_medication_reconciliation_admission_entry_loaded(valid_yaml: Path) -> None:
+    """US-034: MEDICATION_RECONCILIATION_ADMISSION must be present with 1440-minute threshold."""
+    load_sla_config.cache_clear()
+    config = load_sla_config(valid_yaml)
+    entry = config.med_reconciliation_admission_entry()
+    assert entry.threshold_minutes == 1440
+    assert entry.reference_field == "admit_time"
+    assert entry.escalation_type == "CHARGE_PHARMACIST_ESCALATION"
+    assert entry.priority == "HIGH"

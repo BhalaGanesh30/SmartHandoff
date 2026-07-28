@@ -13,6 +13,7 @@ from app.models.medication import (
     MedicationListSource,
 )
 from app.models.patient import Patient
+from app.models.pharmacist_alert import PharmacistAlert
 
 # Import state machine module to register the SQLAlchemy event listener.
 # This import must occur after Encounter is defined.
@@ -31,6 +32,7 @@ __all__ = [
     "Medication",
     "MedicationListSource",
     "Patient",
+    "PharmacistAlert",
     "ReconciliationCategory",
     "ReconciliationFlag",
     "RiskTier",

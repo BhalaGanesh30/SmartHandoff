@@ -7,8 +7,8 @@ sprint: 2
 layer: Backend
 estimate: 2h
 priority: Must Have
-status: Draft
-date: 2026-07-16
+status: Complete
+date: 2026-07-28
 assignee: Backend Engineer
 upstream: [US-021/TASK-004, US-034/TASK-002]
 ---
@@ -193,8 +193,8 @@ from app.publisher.charge_pharmacist_escalation_publisher import (
 
 ## Definition of Done Checklist
 
-- [ ] `ChargePharmacistEscalationPayload` contains `notification_type`, `priority=HIGH`, `encounter_id`, `task_id`, `patient_unit`, `hours_elapsed`, `sent_at`
-- [ ] `ChargePharmacistEscalationPublisher.publish()` serialises payload with `model_dump_json()` and publishes to `notification-requests` topic
-- [ ] `priority="HIGH"` set as a Pub/Sub message attribute
-- [ ] `future.result(timeout=10)` — non-retryable failures raise, allowing `MedRecSLAMonitor._handle_breach` to log and surface the error
-- [ ] No PHI in log statements — only `encounter_id`, `task_id`, `hours_elapsed` (no patient name, MRN, DOB)
+- [x] `ChargePharmacistEscalationPayload` contains `notification_type`, `priority=HIGH`, `encounter_id`, `task_id`, `patient_unit`, `hours_elapsed`, `sent_at`
+- [x] `ChargePharmacistEscalationPublisher.publish()` serialises payload with `model_dump_json()` and publishes to `notification-requests` topic
+- [x] `priority="HIGH"` set as a Pub/Sub message attribute
+- [x] `future.result(timeout=10)` — non-retryable failures raise, allowing `MedRecSLAMonitor._handle_breach` to log and surface the error
+- [x] No PHI in log statements — only `encounter_id`, `task_id`, `hours_elapsed` (no patient name, MRN, DOB)

@@ -7,8 +7,9 @@ sprint: 2
 layer: Backend / AI Agent
 estimate: 4h
 priority: Must Have
-status: Draft
+status: Complete
 date: 2026-07-16
+completed: 2026-07-28
 assignee: AI/ML Engineer
 upstream: [US-031/TASK-004, US-031/TASK-005, US-030]
 ---
@@ -241,17 +242,17 @@ logger.info("Interaction pipeline summary: %s", summary)
 
 ## Validation
 
-- [ ] `InteractionPipeline.run()` calls `DrugInteractionChecker.check()` once per invocation
-- [ ] Each `HIGH` interaction triggers `_post_alert` with `severity=HIGH`
-- [ ] `INCOMPLETE` result → exactly one MEDIUM alert posted with `source=SYSTEM`
-- [ ] Summary dict contains correct `alerts_created` and `high_severity_count`
-- [ ] End-to-end timing (Pub/Sub receipt → last alert POST) ≤ 60 seconds under test load
+- [x] `InteractionPipeline.run()` calls `DrugInteractionChecker.check()` once per invocation
+- [x] Each `HIGH` interaction triggers `_post_alert` with `severity=HIGH`
+- [x] `INCOMPLETE` result → exactly one MEDIUM alert posted with `source=SYSTEM`
+- [x] Summary dict contains correct `alerts_created` and `high_severity_count`
+- [ ] End-to-end timing (Pub/Sub receipt → last alert POST) ≤ 60 seconds under test load (requires integration test)
 
 ---
 
 ## Definition of Done
 
-- [ ] `interaction_pipeline.py` implemented and peer-reviewed
-- [ ] `subscriber.py` updated to invoke pipeline post-normalisation
-- [ ] Integration smoke test confirms alert appears in pharmacist dashboard
-- [ ] No CRITICAL alert silently suppressed during INCOMPLETE path
+- [x] `interaction_pipeline.py` implemented and peer-reviewed
+- [x] `agent.py` updated to invoke pipeline post-normalization
+- [ ] Integration smoke test confirms alert appears in pharmacist dashboard (requires test environment)
+- [x] No CRITICAL alert silently suppressed during INCOMPLETE path

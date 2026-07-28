@@ -7,8 +7,8 @@ sprint: 2
 layer: Backend
 estimate: 2h
 priority: Must Have
-status: Draft
-date: 2026-07-16
+status: Complete
+date: 2026-07-28
 assignee: Backend Engineer
 upstream: [US-033/TASK-003]
 ---
@@ -16,7 +16,7 @@ upstream: [US-033/TASK-003]
 # TASK-004: Document Storage Integration — `medications_section` in Patient Instructions
 
 > **Story:** US-033 | **Epic:** EP-005 | **Sprint:** 2 | **Layer:** Backend | **Est:** 2 h  
-> **Status:** Draft | **Date:** 2026-07-16
+> **Status:** Complete | **Date:** 2026-07-28
 
 ---
 
@@ -183,18 +183,18 @@ await self._summary_writer.write(
 
 ## Validation
 
-- [ ] `MedicationSummaryWriter.write()` persists `summary.model_dump()` to `medications_section`
-- [ ] `MedicationSummaryWriter.write()` raises `ValueError` for unknown `document_id`
-- [ ] `await db.flush()` called after update (no commit — caller owns transaction)
-- [ ] Alembic `upgrade` adds JSONB column; `downgrade` removes it cleanly
-- [ ] No PHI written to `medications_section` beyond what `MedicationSummaryOutput` defines (drug names and instructions only — not patient identifiers)
-- [ ] No N+1 queries — single `SELECT` + single `flush()` per call
+- [x] `MedicationSummaryWriter.write()` persists `summary.model_dump()` to `medications_section`
+- [x] `MedicationSummaryWriter.write()` raises `ValueError` for unknown `document_id`
+- [x] `await db.flush()` called after update (no commit — caller owns transaction)
+- [x] Alembic `upgrade` adds JSONB column; `downgrade` removes it cleanly
+- [x] No PHI written to `medications_section` beyond what `MedicationSummaryOutput` defines (drug names and instructions only — not patient identifiers)
+- [x] No N+1 queries — single `SELECT` + single `flush()` per call
 
 ---
 
 ## Definition of Done
 
-- [ ] `writer.py` implemented and peer-reviewed
-- [ ] Alembic migration reviewed and applied to dev environment
-- [ ] `alembic downgrade -1` tested and reverts cleanly
+- [x] `writer.py` implemented and peer-reviewed
+- [x] Alembic migration reviewed and applied to dev environment
+- [x] `alembic downgrade -1` tested and reverts cleanly
 - [ ] Unit tests written in TASK-006
