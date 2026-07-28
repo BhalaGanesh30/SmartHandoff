@@ -22,6 +22,7 @@ from app.models.patient import PatientResolutionStatus
 if TYPE_CHECKING:
     from app.models.adt_event import AdtEvent
     from app.models.agent_task import AgentTask
+    from app.models.appointment import Appointment
     from app.models.bed import Bed
     from app.models.document import Document
     from app.models.medication import Medication
@@ -214,6 +215,12 @@ class Encounter(Base, TimestampMixin, SoftDeleteMixin):
     medications: Mapped[list["Medication"]] = relationship(
         "Medication",
         back_populates="encounter",
+        lazy="select",
+    )
+    appointments: Mapped[list["Appointment"]] = relationship(
+        "Appointment",
+        back_populates="encounter",
+        cascade="all, delete-orphan",
         lazy="select",
     )
 

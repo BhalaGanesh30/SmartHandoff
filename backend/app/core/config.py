@@ -168,6 +168,52 @@ class Settings:
             )
         return value
 
+    @property
+    def PATIENT_EVENTS_TOPIC(self) -> str:
+        """Pub/Sub topic for patient-related events (US-042).
+        
+        Published to by the chatbot agent (EP-008) with URGENCY_FLAG_SET events.
+        Format: projects/{project_id}/topics/patient-events
+        
+        Defaults to using GCP_PROJECT_ID if not explicitly set.
+        """
+        value = os.environ.get("PATIENT_EVENTS_TOPIC", "")
+        if not value:
+            project_id = self.GCP_PROJECT_ID
+            value = f"projects/{project_id}/topics/patient-events"
+        return value
+
+    @property
+    def URGENCY_ESCALATION_SUBSCRIPTION(self) -> str:
+        """Pub/Sub subscription for URGENCY_FLAG_SET events (US-042).
+        
+        Consumed by the follow-up care agent's CareEscalationMonitor.
+        Format: projects/{project_id}/subscriptions/urgency-escalation-sub
+        
+        Defaults to using GCP_PROJECT_ID if not explicitly set.
+        """
+        value = os.environ.get("URGENCY_ESCALATION_SUBSCRIPTION", "")
+        if not value:
+            project_id = self.GCP_PROJECT_ID
+            value = f"projects/{project_id}/subscriptions/urgency-escalation-sub"
+        return value
+
+    @property
+    def NOTIFICATION_REQUESTS_TOPIC(self) -> str:
+        """Pub/Sub topic for outbound notification dispatch requests (US-042, US-064).
+        
+        Published to by agents when notifications need to be sent.
+        Consumed by the notification service for SMS/email dispatch.
+        Format: projects/{project_id}/topics/notification-requests
+        
+        Defaults to using GCP_PROJECT_ID if not explicitly set.
+        """
+        value = os.environ.get("NOTIFICATION_REQUESTS_TOPIC", "")
+        if not value:
+            project_id = self.GCP_PROJECT_ID
+            value = f"projects/{project_id}/topics/notification-requests"
+        return value
+
     # --- Azure SignalR Service (US-022) ---
 
     @property
