@@ -31,6 +31,7 @@ from app.api.v1.routers.medications import (
 )
 from app.api.v1.routers.alerts import router as alerts_router
 from app.api.v1.routers.beds import router as beds_router
+from app.api.v1.routers.care_escalations import router as care_escalations_router
 from app.api.v1.routers.analytics import router as analytics_router
 from app.api.v1.routers.tasks import router as tasks_router
 from app.api.v1.routers.notifications import router as notifications_router
@@ -104,6 +105,7 @@ app.include_router(medications_router, prefix="/api/v1")
 app.include_router(encounters_medications_router, prefix="/api/v1")  # US-030: encounter medication reconciliation
 app.include_router(alerts_router, prefix="/api/v1")
 app.include_router(beds_router, prefix="/api/v1")
+app.include_router(care_escalations_router, prefix="/api/v1")
 app.include_router(analytics_router, prefix="/api/v1")
 app.include_router(tasks_router, prefix="/api/v1")
 app.include_router(notifications_router, prefix="/api/v1")

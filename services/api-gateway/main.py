@@ -36,7 +36,10 @@ FastAPIInstrumentor.instrument_app(app)
 
 # Register routers
 from app.routers.beds import router as beds_router
+from app.routers.encounters_risk import router as encounters_risk_router
+
 app.include_router(beds_router, prefix="/api/v1")
+app.include_router(encounters_risk_router, prefix="/api/v1")
 
 
 @app.get("/health")
