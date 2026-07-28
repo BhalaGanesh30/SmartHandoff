@@ -21,6 +21,7 @@ from typing import Annotated
 import httpx
 import redis
 from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi.responses import Response
 from pydantic import BaseModel, Field
 from sqlalchemy import update as sa_update
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -44,16 +45,6 @@ class TokenResponse(BaseModel):
     access_token: str = Field(..., description="SmartHandoff application JWT")
     token_type: str = Field(default="bearer")
     expires_in: int = Field(default=28800, description="Token validity in seconds (8h)")
-
-
-@router.options(
-    "/token",
-    summary="CORS preflight for token endpoint",
-    include_in_schema=False,
-)
-async def token_options():
-    """Handle CORS preflight OPTIONS request."""
-    return {"status": "ok"}
 
 
 @router.post(
@@ -96,16 +87,6 @@ async def exchange_token(
 
 
 # ── POST /api/v1/auth/logout ──────────────────────────────────────────────────
-
-@router.options(
-    "/logout",
-    summary="CORS preflight for logout endpoint",
-    include_in_schema=False,
-)
-async def logout_options():
-    """Handle CORS preflight OPTIONS request."""
-    return {"status": "ok"}
-
 
 @router.post(
     "/logout",
@@ -200,11 +181,23 @@ def _get_client_id() -> str:
 @router.options(
     "/exchange-code",
     summary="CORS preflight for exchange-code endpoint",
-    include_in_schema=False,
+    status_code=status.HTTP_200_OK,
 )
 async def exchange_code_options():
-    """Handle CORS preflight OPTIONS request."""
-    return {"status": "ok"}
+    """Handle CORS preflight OPTIONS request for exchange-code endpoint."""
+    from app.core.config import get_settings
+    settings = get_settings()
+    origin = settings.CORS_ORIGINS[0] if settings.CORS_ORIGINS else "*"
+    return Response(
+        status_code=status.HTTP_200_OK,
+        headers={
+            "Access-Control-Allow-Origin": origin,
+            "Access-Control-Allow-Methods": "POST, OPTIONS",
+            "Access-Control-Allow-Headers": "*",
+            "Access-Control-Allow-Credentials": "true",
+            "Access-Control-Max-Age": "3600",
+        },
+    )
 
 
 @router.post(
@@ -230,18 +223,31 @@ async def exchange_code(
     # Step 1: Exchange authorization code for id_token with Google
     token_url = "https://oauth2.googleapis.com/token"
     
+    client_id = _get_client_id()
+    client_secret = _get_client_secret()
+    
+    # DEBUG: Log OAuth configuration
+    logger.warning(f"🔍 OAuth Config - Client ID: {client_id}")
+    logger.warning(f"🔍 OAuth Config - Has Client Secret: {bool(client_secret)}")
+    logger.warning(f"🔍 OAuth Config - Client Secret (first 10 chars): {client_secret[:10] if client_secret else 'None'}...")
+    logger.warning(f"🔍 OAuth Config - Redirect URI: {body.redirect_uri}")
+    logger.warning(f"🔍 OAuth Config - Code (first 20 chars): {body.code[:20]}...")
+    logger.warning(f"🔍 OAuth Config - Code Verifier (first 20 chars): {body.code_verifier[:20]}...")
+    
     token_request_data = {
         "grant_type": "authorization_code",
         "code": body.code,
         "redirect_uri": body.redirect_uri,
-        "client_id": _get_client_id(),
+        "client_id": client_id,
         "code_verifier": body.code_verifier,
     }
     
-    # Only add client_secret if it's set (Google allows PKCE without secret for public clients)
-    client_secret = _get_client_secret()
+    # Add client_secret - required for Web Application OAuth clients
     if client_secret:
         token_request_data["client_secret"] = client_secret
+        logger.warning("🔍 Using Web Application OAuth flow with PKCE + client_secret")
+    else:
+        logger.warning("⚠️ No client_secret found - using PKCE-only flow")
     
     try:
         async with httpx.AsyncClient() as client:
@@ -253,6 +259,11 @@ async def exchange_code(
             )
             response.raise_for_status()
             token_data = response.json()
+            logger.info(
+                "Token exchange successful. Response keys: %s, has id_token: %s",
+                list(token_data.keys()),
+                'id_token' in token_data
+            )
     except httpx.HTTPError as exc:
         logger.error(
             "Failed to exchange authorization code: %s - Response: %s",
@@ -267,11 +278,20 @@ async def exchange_code(
     
     id_token = token_data.get("id_token")
     if not id_token:
-        logger.error("No id_token in Google OAuth response")
+        logger.error("No id_token in Google OAuth response. Response keys: %s", list(token_data.keys()))
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid OAuth response - no id_token",
         )
+    
+    # Log token header for debugging (doesn't expose sensitive data)
+    try:
+        import base64
+        import json
+        header = json.loads(base64.urlsafe_b64decode(id_token.split('.')[0] + '=='))
+        logger.info("id_token header: %s", header)
+    except Exception as e:
+        logger.warning("Failed to decode id_token header: %s", e)
     
     # Step 2: Validate the id_token
     oidc_claims = await validate_id_token(id_token)
