@@ -34,6 +34,10 @@ app.add_middleware(TraceMiddleware)
 # Auto-instrument all FastAPI route handlers (creates per-endpoint child spans).
 FastAPIInstrumentor.instrument_app(app)
 
+# Register routers
+from app.routers.beds import router as beds_router
+app.include_router(beds_router, prefix="/api/v1")
+
 
 @app.get("/health")
 async def health_check() -> dict[str, str]:

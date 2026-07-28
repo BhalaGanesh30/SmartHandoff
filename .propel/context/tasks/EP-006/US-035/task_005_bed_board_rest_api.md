@@ -7,8 +7,8 @@ sprint: 2
 layer: Backend
 estimate: 3h
 priority: Must Have
-status: Draft
-date: 2026-07-17
+status: Complete
+date: 2026-07-28
 assignee: Backend Engineer
 upstream: [US-009, US-035/TASK-001, US-035/TASK-002]
 ---
@@ -16,7 +16,7 @@ upstream: [US-009, US-035/TASK-001, US-035/TASK-002]
 # TASK-005: Bed Board REST API — GET /api/v1/beds and PATCH /api/v1/beds/{id}/status
 
 > **Story:** US-035 | **Epic:** EP-006 | **Sprint:** 2 | **Layer:** Backend | **Est:** 3 h
-> **Status:** Draft | **Date:** 2026-07-17
+> **Status:** Complete | **Date:** 2026-07-28
 
 ---
 

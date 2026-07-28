@@ -148,6 +148,41 @@ class Encounter(Base, TimestampMixin, SoftDeleteMixin):
         comment="Predicted readmission probability (0.0–1.0) from ML model",
     )
 
+    # US-036: ML-predicted discharge time (TR-007 ML Inference Service)
+    predicted_discharge_time: Mapped[datetime | None] = mapped_column(
+        sa.DateTime(timezone=True),
+        nullable=True,
+        comment="ML-predicted discharge datetime (UTC). NULL if not yet predicted.",
+    )
+    discharge_prediction_confidence: Mapped[str | None] = mapped_column(
+        sa.String(10),
+        nullable=True,
+        comment="Confidence tier: 'high', 'medium', 'low', or NULL if unpredicted.",
+    )
+    discharge_prediction_interval_hours: Mapped[float | None] = mapped_column(
+        sa.Numeric(precision=5, scale=2),
+        nullable=True,
+        comment="±hours confidence interval from ML Inference Service (US-036).",
+    )
+
+    # US-038: ED boarding alert tracking
+    boarding_alert_sent_at: Mapped[datetime | None] = mapped_column(
+        sa.DateTime(timezone=True),
+        nullable=True,
+        comment=(
+            "UTC timestamp when the ED boarding alert was first published. "
+            "NULL = no alert sent. Idempotency guard for US-038 AC Scenario 4."
+        ),
+    )
+    boarding_alert_resolved_at: Mapped[datetime | None] = mapped_column(
+        sa.DateTime(timezone=True),
+        nullable=True,
+        comment=(
+            "UTC timestamp when the boarding alert was resolved on bed assignment. "
+            "NULL = alert still active or not triggered."
+        ),
+    )
+
     # External identifiers
     visit_number: Mapped[str | None] = mapped_column(
         sa.String(64),
