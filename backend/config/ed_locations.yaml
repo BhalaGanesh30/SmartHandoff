@@ -1,0 +1,18 @@
+# ED location codes for boarding monitor (US-038).
+# Values match PV1-3 (assigned patient location) codes from HL7 ADT messages.
+# Add facility-specific codes as needed — changes here take effect on next
+# BoardingMonitor poll without redeployment (hot-loaded each cycle).
+#
+# US-038 Technical Notes: "ED location codes: configurable list in
+#   config/ed_locations.yaml (facility-specific ADT codes)"
+#
+# Design refs:
+#   US-038 AC Scenario 1 — encounters with patient_location=ED qualify
+#   US-038 TASK-001 — hot-reloadable location code list
+
+ed_location_codes:
+  - "ED"
+  - "EDOBS"
+  - "EMERG"
+  - "ER"
+  - "EMEROBS"

@@ -49,3 +49,16 @@ class EncounterStateTransitionError(HTTPException):
         self.from_status = from_status
         self.to_status = to_status
         self.encounter_id = encounter_id  # Used for logging only, not exposed in response
+
+
+class BedStatusTransitionError(ValueError):
+    """Raised when a bed status transition is not permitted.
+    
+    This exception is raised by the BedManagementAgent state machine when
+    an ADT event attempts an invalid status transition (e.g., A03 discharge
+    on a bed that is not OCCUPIED).
+    
+    Design refs:
+        US-035 TASK-001 — BedManagementAgent status state machine
+    """
+    pass

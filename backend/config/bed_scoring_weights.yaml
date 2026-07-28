@@ -1,0 +1,8 @@
+# Bed recommendation scoring weights — hot-reloadable without deployment.
+# All weights must sum to 1.0.
+# US-037 AC Scenario 3 defaults.
+weights:
+  acuity: 0.40
+  care_type: 0.35
+  isolation: 0.15
+  gender: 0.10
