@@ -6,6 +6,7 @@ at boot rather than silently writing unencrypted PHI.
 """
 from __future__ import annotations
 
+import logging
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
@@ -49,25 +50,67 @@ from app.middleware.phi_log_sanitiser import PhiLogSanitiserMiddleware
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Application lifespan — validates config and warms resources at startup."""
-    # 1. Validate RBAC config — refuse startup if matrix is misconfigured (US-057)
-    validate_rbac_config()
-    # 2. Fail fast: raises RuntimeError / ValueError on misconfiguration.
-    # This prevents the service from accepting requests with a broken key.
-    get_phi_encryption_key()
-    # 3. Warm write + read DB connection pools (PgBouncer → primary + direct replica).
-    create_db_engines()
-    # 4. Initialize SignalR broadcaster (US-022) - optional
-    settings = get_settings()
+    import sys
+    print("🚀 LIFESPAN STARTUP BEGINNING", file=sys.stderr, flush=True)
+    
+    logger = logging.getLogger(__name__)
+    logger.warning("=" * 80)
+    logger.warning("🚀 FastAPI lifespan startup beginning...")
+    logger.warning("=" * 80)
+    
     broadcaster = None
-    if settings.AZURE_SIGNALR_CONNECTION_STRING:
-        broadcaster = SignalRBroadcaster(settings.AZURE_SIGNALR_CONNECTION_STRING)
-        set_signalr_broadcaster(broadcaster)
+    try:
+        # 1. Validate RBAC config — refuse startup if matrix is misconfigured (US-057)
+        logger.warning("🔧 Startup Step 1/4: Validating RBAC config...")
+        validate_rbac_config()
+        logger.warning("✓ RBAC config validated successfully")
+        
+        # 2. Fail fast: raises RuntimeError / ValueError on misconfiguration.
+        # This prevents the service from accepting requests with a broken key.
+        logger.warning("🔧 Startup Step 2/4: Validating PHI encryption key...")
+        get_phi_encryption_key()
+        logger.warning("✓ PHI encryption key validated successfully")
+        
+        # 3. Warm write + read DB connection pools (PgBouncer → primary + direct replica).
+        logger.warning("🔧 Startup Step 3/4: Initializing database engines...")
+        print("🔧 ABOUT TO CALL create_db_engines()", file=sys.stderr, flush=True)
+        create_db_engines()
+        print("✓ create_db_engines() COMPLETED", file=sys.stderr, flush=True)
+        logger.warning("✓ Database engines initialized successfully")
+        
+        # 4. Initialize SignalR broadcaster (US-022) - optional
+        settings = get_settings()
+        if settings.AZURE_SIGNALR_CONNECTION_STRING:
+            logger.warning("🔧 Startup Step 4/4: Initializing SignalR broadcaster...")
+            broadcaster = SignalRBroadcaster(settings.AZURE_SIGNALR_CONNECTION_STRING)
+            set_signalr_broadcaster(broadcaster)
+            logger.warning("✓ SignalR broadcaster initialized successfully")
+        else:
+            logger.warning("🔧 Startup Step 4/4: SignalR broadcaster not configured (skipped)")
+        
+        logger.warning("=" * 80)
+        logger.warning("✅ FastAPI application startup COMPLETE - READY TO ACCEPT REQUESTS")
+        logger.warning("=" * 80)
+        
+    except Exception as exc:
+        logger.error("=" * 80)
+        logger.error("❌ FATAL: Application startup failed!")
+        logger.error("=" * 80)
+        logger.exception("Startup exception: %s", exc)
+        raise  # Re-raise to prevent app from starting with broken config
+    
     yield
-    # Shutdown: drain DB connections gracefully before Cloud Run SIGTERM timeout (30s).
-    await dispose_db_engines()
-    # Shutdown: close SignalR broadcaster HTTP client
-    if broadcaster:
-        await broadcaster.aclose()
+    
+    logger.warning("🔽 FastAPI lifespan shutdown beginning...")
+    try:
+        # Shutdown: drain DB connections gracefully before Cloud Run SIGTERM timeout (30s).
+        await dispose_db_engines()
+        # Shutdown: close SignalR broadcaster HTTP client
+        if broadcaster:
+            await broadcaster.aclose()
+        logger.warning("✓ FastAPI lifespan shutdown completed")
+    except Exception as exc:
+        logger.error("❌ Error during shutdown: %s", exc)
 
 
 app = FastAPI(
@@ -77,8 +120,21 @@ app = FastAPI(
 
 # ── CORS Middleware ──────────────────────────────────────────────────────────
 # Allows frontend (Angular app) to call the API from a different origin.
-# Must be added FIRST so it's the outermost middleware (processes preflight OPTIONS).
+# MUST be added LAST so it's the FIRST middleware to process requests (reverse order).
+# FastAPI applies middleware in reverse — last added = outermost = first to run.
 settings = get_settings()
+logger = logging.getLogger(__name__)
+logger.info("Configuring CORS middleware with origins: %s", settings.CORS_ORIGINS)
+
+# HIPAA audit logging middleware — must be registered after JWT validation
+# middleware so request.state.user_id is populated when this middleware runs.
+# Starlette wraps in reverse add_middleware order — last added = outermost.
+# Position 1: AuditLogMiddleware (added first = innermost on response)
+app.add_middleware(HIPAAAuditMiddleware)
+# Position 2: PhiLogSanitiserMiddleware (runs before audit on response path)
+app.add_middleware(PhiLogSanitiserMiddleware)
+
+# Position 3: CORSMiddleware (added last = outermost = first to process preflight OPTIONS)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.CORS_ORIGINS,
@@ -88,14 +144,6 @@ app.add_middleware(
     expose_headers=["*"],
     max_age=3600,
 )
-
-# HIPAA audit logging middleware — must be registered after JWT validation
-# middleware so request.state.user_id is populated when this middleware runs.
-# Starlette wraps in reverse add_middleware order — last added = outermost.
-# Position 7: AuditLogMiddleware (added first = innermost on response)
-app.add_middleware(HIPAAAuditMiddleware)
-# Position 6: PhiLogSanitiserMiddleware (runs before audit on response path)
-app.add_middleware(PhiLogSanitiserMiddleware)
 
 # ── Public routers (no JWT required) ─────────────────────────────────────────
 # Auth router — public endpoint (no JWT required to exchange OIDC id_token)
@@ -123,6 +171,38 @@ app.include_router(admin_users_router, prefix="/api/v1")
 app.include_router(scim_router, prefix="/api/v1")
 app.include_router(signalr_router, prefix="/api/v1")
 app.include_router(negotiate_router, prefix="/api/v1")
+
+
+# ── Health and Readiness Endpoints ──────────────────────────────────────────────
+@app.get("/health")
+async def health():
+    """Liveness probe endpoint for Cloud Run (TR-016).
+    
+    Returns 200 OK when the application process is alive.
+    Cloud Run restarts the container on 3 consecutive failures.
+    
+    Design refs:
+        TR-016 — Health check probes
+        US-002 — Cloud Run service manifests with health probes
+    """
+    return {"status": "ok"}
+
+
+@app.get("/ready")
+async def ready():
+    """Readiness probe endpoint for Cloud Run (TR-016).
+    
+    Returns 200 OK when the application is fully initialized and ready to accept requests.
+    Cloud Run blocks traffic during startup until this endpoint returns 200.
+    
+    This endpoint verifies that critical dependencies (DB engines, RBAC config, PHI encryption key)
+    have been successfully initialized during the lifespan startup.
+    
+    Design refs:
+        TR-016 — Readiness check probes
+        US-002 — Cloud Run service manifests with startup/readiness probes
+    """
+    return {"status": "ready"}
 
 
 # ── Prometheus Metrics Endpoint ──────────────────────────────────────────────
