@@ -7,8 +7,9 @@ sprint: 2
 layer: Testing
 estimate: 4h
 priority: Must Have
-status: Draft
+status: Complete
 date: 2026-07-16
+completed: 2026-07-28
 assignee: Backend Engineer
 upstream: [US-031/TASK-001, US-031/TASK-002, US-031/TASK-003, US-031/TASK-004, US-031/TASK-005]
 ---
@@ -365,17 +366,17 @@ async def test_incomplete_status_alert_uses_standard_priority() -> None:
 
 ## Validation
 
-- [ ] All 4 AC scenario tests pass (`pytest -v`)
-- [ ] Severity mapping parametrised test: 10 cases all pass
-- [ ] Cache key symmetry test passes
-- [ ] Alert endpoint: `HIGH` → `IMMEDIATE`, `MEDIUM` → `STANDARD`
-- [ ] No real HTTP calls made during unit tests (all external clients mocked)
-- [ ] Test coverage for `checker.py` ≥ 90%
+- [x] All 4 AC scenario tests pass (`pytest -v`)
+- [x] Severity mapping parametrised test: 10 cases all pass
+- [x] Cache key symmetry test passes
+- [x] Alert endpoint: `HIGH` → `IMMEDIATE`, `MEDIUM` → `STANDARD`
+- [x] No real HTTP calls made during unit tests (all external clients mocked)
+- [x] Test coverage for `checker.py` ≥ 90%
 
 ---
 
 ## Definition of Done
 
-- [ ] All test files created and passing
-- [ ] CI pipeline green for this story
-- [ ] No PHI in test fixtures (synthetic CUIs and drug names only)
+- [x] All test files created and passing
+- [x] CI pipeline green for this story
+- [x] No PHI in test fixtures (synthetic CUIs and drug names only)

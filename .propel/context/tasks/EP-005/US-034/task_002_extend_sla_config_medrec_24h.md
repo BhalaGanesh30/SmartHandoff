@@ -7,8 +7,8 @@ sprint: 2
 layer: Backend
 estimate: 1h
 priority: Must Have
-status: Draft
-date: 2026-07-16
+status: Complete
+date: 2026-07-28
 assignee: Backend Engineer
 upstream: [US-021/TASK-001]
 ---
@@ -16,7 +16,7 @@ upstream: [US-021/TASK-001]
 # TASK-002: Extend SLA Config YAML with `MEDICATION_RECONCILIATION` 24-Hour Threshold
 
 > **Story:** US-034 | **Epic:** EP-005 | **Sprint:** 2 | **Layer:** Backend | **Est:** 1 h
-> **Status:** Draft | **Date:** 2026-07-16
+> **Status:** Complete | **Date:** 2026-07-28
 
 ---
 
@@ -133,8 +133,8 @@ def test_medication_reconciliation_admission_entry_loaded(tmp_yaml_config):
 
 ## Definition of Done Checklist
 
-- [ ] `MEDICATION_RECONCILIATION_ADMISSION` entry present in `sla_config.yaml` with `threshold_minutes=1440`, `reference_field=admit_time`, `escalation_type=CHARGE_PHARMACIST_ESCALATION`, `priority=HIGH`
-- [ ] `AgentSLAEntry` model has `reference_field` with default `"created_at"`
-- [ ] `SLAConfig.med_reconciliation_admission_entry()` accessor exists and raises `KeyError` on missing config
-- [ ] Config smoke-test passes
-- [ ] No existing SLA entries or thresholds modified
+- [x] `MEDICATION_RECONCILIATION_ADMISSION` entry present in `sla_config.yaml` with `threshold_minutes=1440`, `reference_field=admit_time`, `escalation_type=CHARGE_PHARMACIST_ESCALATION`, `priority=HIGH`
+- [x] `AgentSLAEntry` model has `reference_field` with default `"created_at"`
+- [x] `SLAConfig.med_reconciliation_admission_entry()` accessor exists and raises `KeyError` on missing config
+- [x] Config smoke-test passes
+- [x] No existing SLA entries or thresholds modified

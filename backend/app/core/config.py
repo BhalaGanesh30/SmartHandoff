@@ -283,6 +283,29 @@ class Settings:
             )
         return value
 
+    # --- Redis (Cloud Memorystore) — US-031 ---
+
+    @property
+    def REDIS_URL(self) -> str:
+        """Redis connection URL for Cloud Memorystore (US-031).
+
+        Format: redis://host:port or redis://host:port/db_number
+        Used for drug interaction caching (24h TTL).
+
+        Loaded from environment variable REDIS_URL.
+        For local development, use redis://localhost:6379/0
+
+        Raises:
+            RuntimeError: If REDIS_URL is not set.
+        """
+        value = os.environ.get("REDIS_URL", "")
+        if not value:
+            raise RuntimeError(
+                "REDIS_URL environment variable is not set. "
+                "Set it in Cloud Run environment configuration or .env file."
+            )
+        return value
+
 
 @lru_cache(maxsize=1)
 def get_settings() -> Settings:

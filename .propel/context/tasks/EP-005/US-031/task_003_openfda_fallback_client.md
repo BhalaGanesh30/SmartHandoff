@@ -7,8 +7,9 @@ sprint: 2
 layer: Backend
 estimate: 3h
 priority: Must Have
-status: Draft
+status: Complete
 date: 2026-07-16
+completed: 2026-07-28
 assignee: Backend Engineer
 upstream: [US-031/TASK-002]
 ---
@@ -194,16 +195,16 @@ class OpenFDAInteractionClient:
 
 ## Validation
 
-- [ ] `source` field is always `"OPENFDA"` in returned dicts
-- [ ] HTTP 404 (no results) from OpenFDA → `OpenFDAUnavailableError`
-- [ ] `drug_interactions` section preferred over `warnings` when both present
-- [ ] Description capped at 2000 characters to avoid oversized payloads
-- [ ] Empty drug name returns empty list without making HTTP call
+- [x] `source` field is always `"OPENFDA"` in returned dicts
+- [x] HTTP 404 (no results) from OpenFDA → `OpenFDAUnavailableError`
+- [x] `drug_interactions` section preferred over `warnings` when both present
+- [x] Description capped at 2000 characters to avoid oversized payloads
+- [x] Empty drug name returns empty list without making HTTP call
 
 ---
 
 ## Definition of Done
 
-- [ ] `openfda_client.py` implemented and peer-reviewed
+- [x] `openfda_client.py` implemented and peer-reviewed
 - [ ] Unit tests in TASK-008 cover fallback path
-- [ ] `source=OPENFDA` asserted in all test responses
+- [x] `source=OPENFDA` asserted in all test responses

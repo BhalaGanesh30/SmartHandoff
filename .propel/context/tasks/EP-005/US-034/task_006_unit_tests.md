@@ -7,8 +7,8 @@ sprint: 2
 layer: Backend
 estimate: 3h
 priority: Must Have
-status: Draft
-date: 2026-07-16
+status: Complete
+date: 2026-07-28
 assignee: Backend Engineer
 upstream: [US-034/TASK-003, US-034/TASK-004, US-034/TASK-005]
 ---
@@ -16,7 +16,7 @@ upstream: [US-034/TASK-003, US-034/TASK-004, US-034/TASK-005]
 # TASK-006: Write Unit Tests — 24h Escalation, Duplicate Suppression, Completed Task Exclusion, Override Endpoint
 
 > **Story:** US-034 | **Epic:** EP-005 | **Sprint:** 2 | **Layer:** Backend | **Est:** 3 h
-> **Status:** Draft | **Date:** 2026-07-16
+> **Status:** Complete | **Date:** 2026-07-28
 
 ---
 
@@ -425,14 +425,14 @@ async def test_override_returns_409_when_already_completed() -> None:
 
 ## Definition of Done Checklist
 
-- [ ] `test_escalation_fired_when_admit_time_exceeds_24h` passes — Scenario 1
-- [ ] `test_completed_task_not_returned_by_find_breached_tasks` passes — Scenario 2
-- [ ] `test_duplicate_escalation_not_sent_when_already_stamped` passes — Scenario 3
-- [ ] `test_handle_breach_stamps_sla_escalation_sent_at_before_publish` passes — Scenario 3 stamp-order
-- [ ] `test_publisher_called_with_correct_payload_fields` passes — verifies `encounter_id`, `patient_unit`, `hours_elapsed`
-- [ ] `test_override_succeeds_for_charge_pharmacist` passes — Scenario 4
-- [ ] `test_override_returns_403_for_nurse_role` passes — RBAC guard
-- [ ] `test_override_returns_404_when_task_not_found` passes — error handling
-- [ ] `test_override_returns_409_when_already_completed` passes — conflict guard
-- [ ] All tests are pure unit tests — no live DB, Pub/Sub, or network I/O
-- [ ] `pytest -q` exits with 0 failures
+- [x] `test_escalation_fired_when_admit_time_exceeds_24h` passes — Scenario 1
+- [x] `test_completed_task_not_returned_by_find_breached_tasks` passes — Scenario 2
+- [x] `test_duplicate_escalation_not_sent_when_already_stamped` passes — Scenario 3
+- [x] `test_handle_breach_stamps_sla_escalation_sent_at_before_publish` passes — Scenario 3 stamp-order
+- [x] `test_publisher_called_with_correct_payload_fields` passes — verifies `encounter_id`, `patient_unit`, `hours_elapsed`
+- [x] `test_override_succeeds_for_charge_pharmacist` passes — Scenario 4
+- [x] `test_override_returns_403_for_nurse_role` passes — RBAC guard
+- [x] `test_override_returns_404_when_task_not_found` passes — error handling
+- [x] `test_override_returns_409_when_already_completed` passes — conflict guard
+- [x] All tests are pure unit tests — no live DB, Pub/Sub, or network I/O
+- [x] `pytest -q` exits with 0 failures

@@ -7,8 +7,9 @@ sprint: 2
 layer: Backend
 estimate: 5h
 priority: Must Have
-status: Draft
+status: Complete
 date: 2026-07-16
+completed: 2026-07-28
 assignee: Backend Engineer
 upstream: [US-031/TASK-001, US-031/TASK-002, US-031/TASK-003]
 ---
@@ -252,17 +253,17 @@ class DrugInteractionChecker:
 
 ## Validation
 
-- [ ] Single medication list (`len < 2`) returns `COMPLETE` with no interactions
-- [ ] Cache hit path: `RxNavInteractionClient.get_interactions` never called (mock asserts call count = 0)
-- [ ] Cache miss → RxNav success → results cached and returned
-- [ ] RxNav 503 → OpenFDA fallback called per unique drug name
-- [ ] Both fail → `interaction_check_status="INCOMPLETE"`, `degradation_notice` set
-- [ ] `HIGH`-severity interactions present in result when Warfarin + Aspirin pair processed
+- [x] Single medication list (`len < 2`) returns `COMPLETE` with no interactions
+- [x] Cache hit path: `RxNavInteractionClient.get_interactions` never called (mock asserts call count = 0)
+- [x] Cache miss → RxNav success → results cached and returned
+- [x] RxNav 503 → OpenFDA fallback called per unique drug name
+- [x] Both fail → `interaction_check_status="INCOMPLETE"`, `degradation_notice` set
+- [x] `HIGH`-severity interactions present in result when Warfarin + Aspirin pair processed
 
 ---
 
 ## Definition of Done
 
-- [ ] `checker.py` implemented and peer-reviewed
+- [x] `checker.py` implemented and peer-reviewed
 - [ ] All four AC scenarios exercised via unit tests (TASK-008)
-- [ ] No silent suppression of CRITICAL alerts during degradation
+- [x] No silent suppression of CRITICAL alerts during degradation

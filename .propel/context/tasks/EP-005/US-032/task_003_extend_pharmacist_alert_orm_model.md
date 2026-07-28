@@ -7,8 +7,8 @@ sprint: 2
 layer: Backend / Database
 estimate: 3h
 priority: Must Have
-status: Draft
-date: 2026-07-16
+status: Done
+date: 2026-07-28
 assignee: Backend Engineer
 upstream: [US-031/TASK-005, US-031/TASK-006]
 ---
@@ -16,7 +16,7 @@ upstream: [US-031/TASK-005, US-031/TASK-006]
 # TASK-003: Extend PharmacistAlert ORM Model — HIGH_RISK_DRUG_CLASS Alert Fields
 
 > **Story:** US-032 | **Epic:** EP-005 | **Sprint:** 2 | **Layer:** Backend / Database | **Est:** 3 h
-> **Status:** Draft | **Date:** 2026-07-16
+> **Status:** ✅ Done | **Date:** 2026-07-28
 
 ---
 
@@ -203,12 +203,12 @@ class AlertRead(BaseModel):
 
 ## Validation
 
-- [ ] `PharmacistAlert` model includes all eight new columns listed in the table above
-- [ ] `alert_type` enum accepts both `PHARMACIST_ALERT` and `HIGH_RISK_DRUG_CLASS`
-- [ ] `status` defaults to `ACTIVE` on new alert records
-- [ ] `sla_breached` defaults to `False` on new alert records
-- [ ] `HighRiskDrugClassAlertCreate` rejects unknown `drug_class` values (Pydantic pattern validation)
-- [ ] `AlertResolveRequest` rejects unknown `resolution_type` values
+- [x] `PharmacistAlert` model includes all eight new columns listed in the table above
+- [x] `alert_type` enum accepts both `PHARMACIST_ALERT` and `HIGH_RISK_DRUG_CLASS`
+- [x] `status` defaults to `ACTIVE` on new alert records
+- [x] `sla_breached` defaults to `False` on new alert records
+- [x] `HighRiskDrugClassAlertCreate` rejects unknown `drug_class` values (Pydantic pattern validation)
+- [x] `AlertResolveRequest` rejects unknown `resolution_type` values
 
 ---
 

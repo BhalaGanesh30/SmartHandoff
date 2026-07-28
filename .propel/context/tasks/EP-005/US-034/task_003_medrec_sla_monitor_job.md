@@ -7,8 +7,8 @@ sprint: 2
 layer: Backend
 estimate: 3h
 priority: Must Have
-status: Draft
-date: 2026-07-16
+status: Complete
+date: 2026-07-28
 assignee: Backend Engineer
 upstream: [US-034/TASK-001, US-034/TASK-002, US-021/TASK-003]
 ---
@@ -16,7 +16,7 @@ upstream: [US-034/TASK-001, US-034/TASK-002, US-021/TASK-003]
 # TASK-003: Implement `MedRecSLAMonitor` — 24-Hour Admission SLA Check Added to Existing APScheduler Instance
 
 > **Story:** US-034 | **Epic:** EP-005 | **Sprint:** 2 | **Layer:** Backend | **Est:** 3 h
-> **Status:** Draft | **Date:** 2026-07-16
+> **Status:** Complete | **Date:** 2026-07-28
 
 ---
 
@@ -296,9 +296,9 @@ monitor.start()
 
 ## Definition of Done Checklist
 
-- [ ] `MedRecSLAMonitor.run_check()` queries only `MEDICATION_RECONCILIATION` tasks with `sla_escalation_sent_at IS NULL` and `status IN ('IN_PROGRESS', 'PENDING')`
-- [ ] SLA window measured from `encounter.admit_time` — not `AgentTask.created_at`
-- [ ] `sla_escalation_sent_at` stamped **before** publisher call — prevents duplicate escalation
-- [ ] Second APScheduler job `medrec_sla_check` registered on existing scheduler — not a new scheduler
-- [ ] `COMPLETED` tasks excluded by `status.in_(_ACTIVE_STATUSES)` filter
-- [ ] `logger.warning` emitted with `encounter_id`, `task_id`, `hours_elapsed`, `patient_unit` (no PHI in logs)
+- [x] `MedRecSLAMonitor.run_check()` queries only `MEDICATION_RECONCILIATION` tasks with `sla_escalation_sent_at IS NULL` and `status IN ('IN_PROGRESS', 'PENDING')`
+- [x] SLA window measured from `encounter.admit_date` — not `AgentTask.created_at`
+- [x] `sla_escalation_sent_at` stamped **before** publisher call — prevents duplicate escalation
+- [x] Second APScheduler job `medrec_sla_check` registered on existing scheduler — not a new scheduler
+- [x] `COMPLETED` tasks excluded by `status.in_(_ACTIVE_STATUSES)` filter
+- [x] `logger.warning` emitted with `encounter_id`, `task_id`, `hours_elapsed`, `patient_unit` (no PHI in logs)

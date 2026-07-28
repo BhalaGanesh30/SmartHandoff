@@ -7,8 +7,8 @@ sprint: 2
 layer: Backend / AI
 estimate: 2h
 priority: Must Have
-status: Draft
-date: 2026-07-16
+status: Complete
+date: 2026-07-28
 assignee: AI/ML Engineer
 upstream: [US-033/TASK-003, US-027]
 ---
@@ -16,7 +16,7 @@ upstream: [US-033/TASK-003, US-027]
 # TASK-005: Translation Pipeline Integration — Reuse US-027 for Patient Preferred Language
 
 > **Story:** US-033 | **Epic:** EP-005 | **Sprint:** 2 | **Layer:** Backend / AI | **Est:** 2 h  
-> **Status:** Draft | **Date:** 2026-07-16
+> **Status:** Complete | **Date:** 2026-07-28
 
 ---
 
@@ -258,19 +258,19 @@ async def write_translation(
 
 ## Validation
 
-- [ ] `MedicationSummaryTranslator.translate()` returns a new `MedicationSummaryOutput` (original not mutated)
-- [ ] Drug names (`generic_name`, `brand_name`, `dose`) are NOT translated
-- [ ] `common_side_effects` list items translated individually
-- [ ] `reason` and `dosing_instructions` translated only when not `None`
-- [ ] No new translation logic — `TranslationService` from US-027 called exclusively
-- [ ] Translation skipped entirely when `patient.preferred_language == "en"` or `None`
-- [ ] `document.translations.{lang_code}` JSONB map updated, not replaced
+- [x] `MedicationSummaryTranslator.translate()` returns a new `MedicationSummaryOutput` (original not mutated)
+- [x] Drug names (`generic_name`, `brand_name`, `dose`) are NOT translated
+- [x] `common_side_effects` list items translated individually
+- [x] `reason` and `dosing_instructions` translated only when not `None`
+- [x] No new translation logic — `TranslationService` from US-027 called exclusively
+- [x] Translation skipped entirely when `patient.preferred_language == "en"` or `None`
+- [x] `document.translations.{lang_code}` JSONB map updated, not replaced
 
 ---
 
 ## Definition of Done
 
-- [ ] `translator.py` implemented and peer-reviewed
-- [ ] No duplication of Gemini translation logic from US-027
+- [x] `translator.py` implemented and peer-reviewed
+- [x] No duplication of Gemini translation logic from US-027
 - [ ] Unit tests written in TASK-006 covering Spanish translation path
-- [ ] Module-level docstring with `Design refs` complete
+- [x] Module-level docstring with `Design refs` complete
