@@ -33,18 +33,40 @@ KNOWN_AGENT_TYPES: frozenset[str] = frozenset(
 )
 
 
+class AgentSLAEntry(BaseModel):
+    """Single agent SLA configuration entry.
+    
+    US-034: Extended to support reference_field for admission-time SLAs.
+    
+    Attributes:
+        threshold_minutes: SLA window in minutes.
+        reference_field: Timestamp field used as SLA start (created_at or admit_time).
+        escalation_type: Notification type to send on breach.
+        priority: Escalation priority level.
+        description: Human-readable description of this SLA.
+    """
+
+    threshold_minutes: int
+    reference_field: str = "created_at"  # US-034: admit_time for admission SLAs
+    escalation_type: str = "SUPERVISOR_ESCALATION"
+    priority: str = "NORMAL"
+    description: str = ""
+
+
 class SLAConfig(BaseModel):
     """Validated SLA configuration loaded from sla_config.yaml.
 
+    US-034: Updated to use AgentSLAEntry with reference_field support.
+
     Attributes:
-        sla_thresholds: Mapping of agent_type → SLA minutes.
+        agents: Mapping of agent_type → AgentSLAEntry.
         monitor_interval_seconds: Background job polling interval.
         escalation_dedup_window_minutes: Idempotency window for escalations.
     """
 
-    sla_thresholds: dict[str, int] = Field(
+    agents: dict[str, AgentSLAEntry] = Field(
         ...,
-        description="Per-agent SLA thresholds in minutes.",
+        description="Per-agent SLA configuration entries.",
     )
     monitor_interval_seconds: int = Field(
         default=300,
@@ -57,21 +79,21 @@ class SLAConfig(BaseModel):
         description="Idempotency window to suppress duplicate escalations.",
     )
 
-    @field_validator("sla_thresholds")
+    @field_validator("agents")
     @classmethod
-    def _all_thresholds_positive(cls, v: dict[str, int]) -> dict[str, int]:
+    def _all_thresholds_positive(cls, v: dict[str, AgentSLAEntry]) -> dict[str, AgentSLAEntry]:
         """Reject any threshold ≤ 0."""
-        for agent_type, minutes in v.items():
-            if minutes <= 0:
+        for agent_type, entry in v.items():
+            if entry.threshold_minutes <= 0:
                 raise ValueError(
-                    f"SLA threshold for {agent_type!r} must be > 0, got {minutes}"
+                    f"SLA threshold for {agent_type!r} must be > 0, got {entry.threshold_minutes}"
                 )
         return v
 
     @model_validator(mode="after")
     def _all_agent_types_covered(self) -> "SLAConfig":
         """Fail-fast if the YAML is missing a threshold for any known agent type."""
-        missing = KNOWN_AGENT_TYPES - set(self.sla_thresholds.keys())
+        missing = KNOWN_AGENT_TYPES - set(self.agents.keys())
         if missing:
             raise ValueError(
                 f"sla_config.yaml is missing thresholds for agent types: {sorted(missing)}"
@@ -83,14 +105,33 @@ class SLAConfig(BaseModel):
 
         Falls back to a conservative 30-minute default for unknown agent types
         introduced after the YAML was last updated, and logs a warning.
+        
+        Args:
+            agent_type: The agent type to get threshold for.
+            
+        Returns:
+            SLA threshold in minutes.
         """
-        if agent_type not in self.sla_thresholds:
+        if agent_type not in self.agents:
             logger.warning(
                 "No SLA threshold configured for agent_type=%r; defaulting to 30 minutes",
                 agent_type,
             )
             return 30
-        return self.sla_thresholds[agent_type]
+        return self.agents[agent_type].threshold_minutes
+    
+    def med_reconciliation_admission_entry(self) -> AgentSLAEntry:
+        """Return the MEDICATION_RECONCILIATION_ADMISSION SLA entry.
+        
+        US-034: Provides access to admission-time SLA configuration.
+
+        Raises:
+            KeyError: If the entry is missing from sla_config.yaml.
+            
+        Returns:
+            AgentSLAEntry for medication reconciliation admission SLA.
+        """
+        return self.agents["MEDICATION_RECONCILIATION_ADMISSION"]
 
 
 @lru_cache(maxsize=1)
@@ -123,7 +164,7 @@ def load_sla_config(config_path: Path = _CONFIG_PATH) -> SLAConfig:
     config = SLAConfig(**raw)
     logger.info(
         "SLA configuration loaded: %d agent types, monitor_interval=%ds",
-        len(config.sla_thresholds),
+        len(config.agents),
         config.monitor_interval_seconds,
     )
     return config

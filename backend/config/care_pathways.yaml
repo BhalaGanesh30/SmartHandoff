@@ -1,0 +1,32 @@
+# SmartHandoff Follow-up Care Pathway Configuration
+# Defines risk tier-to-pathway mapping for the FollowUpCareAgent.
+#
+# US-040 DoD: "Risk tier-to-pathway mapping in config/care_pathways.yaml (configurable follow-up days)"
+#
+# Fields per tier:
+#   followup_days     : Calendar days from discharge_date for target_date calculation
+#   appointment_type  : AppointmentType enum value persisted to the appointment table
+#   alert_care_manager: Whether a CARE_MANAGER_ALERT is published to notification-requests Pub/Sub
+#   required_followup_days: Days value included in the CARE_MANAGER_ALERT payload (HIGH tier only)
+#
+# To adjust follow-up windows, update this file and redeploy the followup-agent service.
+# No code changes are required for window adjustments.
+
+care_pathways:
+  HIGH:
+    followup_days: 7
+    appointment_type: HIGH_RISK_FOLLOW_UP
+    alert_care_manager: true
+    required_followup_days: 7
+
+  MEDIUM:
+    followup_days: 14
+    appointment_type: STANDARD_FOLLOW_UP
+    alert_care_manager: false
+    required_followup_days: null
+
+  LOW:
+    followup_days: 30
+    appointment_type: ROUTINE_FOLLOW_UP
+    alert_care_manager: false
+    required_followup_days: null

@@ -7,8 +7,8 @@ sprint: 2
 layer: Backend
 estimate: 4h
 priority: Must Have
-status: Draft
-date: 2026-07-16
+status: Done
+date: 2026-07-28
 assignee: Backend Engineer
 upstream: [US-032/TASK-001]
 ---
@@ -16,7 +16,7 @@ upstream: [US-032/TASK-001]
 # TASK-002: HighRiskDrugClassDetector Service — Discharge List Scanner
 
 > **Story:** US-032 | **Epic:** EP-005 | **Sprint:** 2 | **Layer:** Backend | **Est:** 4 h
-> **Status:** Draft | **Date:** 2026-07-16
+> **Status:** ✅ Done | **Date:** 2026-07-28
 
 ---
 
@@ -194,12 +194,12 @@ class HighRiskDrugClassDetector:
 
 ## Validation
 
-- [ ] `HighRiskDrugClassDetector().detect([DischargedMedication(rxcui="11289", drug_name="Warfarin 5mg")])` returns one match with `drug_class="ANTICOAGULANT"` and `severity="HIGH"`
-- [ ] `detect([DischargedMedication(rxcui="123", drug_name="Amoxicillin 500mg")])` returns empty list
-- [ ] `_normalise("Insulin Glargine 100 Units/mL")` returns `"insulin glargine"`
-- [ ] `_normalise("OxyCODONE 10mg ER")` returns `"oxycodone"` (case-insensitive)
-- [ ] A medication list with both `Warfarin 5mg` and `Oxycodone 10mg` returns two matches (different classes)
-- [ ] Custom `HighRiskDrugConfig` instance injected via constructor — default singleton not mutated
+- [x] `HighRiskDrugClassDetector().detect([DischargedMedication(rxcui="11289", drug_name="Warfarin 5mg")])` returns one match with `drug_class="ANTICOAGULANT"` and `severity="HIGH"`
+- [x] `detect([DischargedMedication(rxcui="123", drug_name="Amoxicillin 500mg")])` returns empty list
+- [x] `_normalise("Insulin Glargine 100 Units/mL")` returns `"insulin glargine"`
+- [x] `_normalise("OxyCODONE 10mg ER")` returns `"oxycodone"` (case-insensitive)
+- [x] A medication list with both `Warfarin 5mg` and `Oxycodone 10mg` returns two matches (different classes)
+- [x] Custom `HighRiskDrugConfig` instance injected via constructor — default singleton not mutated
 
 ---
 

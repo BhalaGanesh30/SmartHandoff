@@ -7,8 +7,8 @@ sprint: 2
 layer: Backend / Config
 estimate: 1h
 priority: Must Have
-status: Draft
-date: 2026-07-16
+status: Done
+date: 2026-07-28
 assignee: Backend Engineer
 upstream: [US-030/TASK-003]
 ---
@@ -16,7 +16,7 @@ upstream: [US-030/TASK-003]
 # TASK-001: Create `config/high_risk_drugs.yaml` — High-Risk Drug Class Mapping
 
 > **Story:** US-032 | **Epic:** EP-005 | **Sprint:** 2 | **Layer:** Backend / Config | **Est:** 1 h
-> **Status:** Draft | **Date:** 2026-07-16
+> **Status:** ✅ Done | **Date:** 2026-07-28
 
 ---
 
@@ -214,12 +214,12 @@ high_risk_drug_config = HighRiskDrugConfig()
 
 ## Validation
 
-- [ ] `backend/config/high_risk_drugs.yaml` exists and is valid YAML (`yaml.safe_load` succeeds without error)
-- [ ] All four mandatory ISMP classes present: `ANTICOAGULANT`, `INSULIN`, `OPIOID`, `CHEMOTHERAPY`
-- [ ] `HighRiskDrugConfig()` initialises without errors in a local Python shell
-- [ ] `high_risk_drug_config.drug_to_class["warfarin"] == "ANTICOAGULANT"` passes
-- [ ] `high_risk_drug_config.drug_to_class["oxycodone"] == "OPIOID"` passes
-- [ ] Duplicate drug name across two classes raises `ValueError` on startup
+- [x] `backend/config/high_risk_drugs.yaml` exists and is valid YAML (`yaml.safe_load` succeeds without error)
+- [x] All four mandatory ISMP classes present: `ANTICOAGULANT`, `INSULIN`, `OPIOID`, `CHEMOTHERAPY`
+- [x] `HighRiskDrugConfig()` initialises without errors in a local Python shell
+- [x] `high_risk_drug_config.drug_to_class["warfarin"] == "ANTICOAGULANT"` passes
+- [x] `high_risk_drug_config.drug_to_class["oxycodone"] == "OPIOID"` passes
+- [x] Duplicate drug name across two classes raises `ValueError` on startup
 
 ---
 

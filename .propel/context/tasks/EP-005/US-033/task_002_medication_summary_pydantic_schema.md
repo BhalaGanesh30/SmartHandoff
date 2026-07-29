@@ -7,8 +7,8 @@ sprint: 2
 layer: Backend
 estimate: 1h
 priority: Must Have
-status: Draft
-date: 2026-07-16
+status: Complete
+date: 2026-07-28
 assignee: Backend Engineer
 upstream: []
 ---
@@ -16,7 +16,7 @@ upstream: []
 # TASK-002: Medication Summary Pydantic Output Schema
 
 > **Story:** US-033 | **Epic:** EP-005 | **Sprint:** 2 | **Layer:** Backend | **Est:** 1 h  
-> **Status:** Draft | **Date:** 2026-07-16
+> **Status:** Complete | **Date:** 2026-07-28
 
 ---
 
@@ -195,17 +195,17 @@ __all__ = [
 
 ## Validation
 
-- [ ] `MedicationSummaryOutput` can be instantiated with all four lists populated
-- [ ] `MedicationSummaryOutput` serialises to valid JSON matching the DoD schema
-- [ ] `MedicationEntry.common_side_effects` defaults to an empty list (not `None`)
-- [ ] `StoppedMedicationEntry.reason` and `ChangedMedicationEntry.reason` are optional
-- [ ] All models use `Field(...)` with descriptions for OpenAPI/schema generation
-- [ ] `model_json_schema()` passes without errors
+- [x] `MedicationSummaryOutput` can be instantiated with all four lists populated
+- [x] `MedicationSummaryOutput` serialises to valid JSON matching the DoD schema
+- [x] `MedicationEntry.common_side_effects` defaults to an empty list (not `None`)
+- [x] `StoppedMedicationEntry.reason` and `ChangedMedicationEntry.reason` are optional
+- [x] All models use `Field(...)` with descriptions for OpenAPI/schema generation
+- [x] `model_json_schema()` passes without errors
 
 ---
 
 ## Definition of Done
 
-- [ ] `schema.py` implemented, peer-reviewed, and docstrings complete
-- [ ] No PHI in schema definitions — data populated by generator at runtime only
-- [ ] Downstream tasks (TASK-003, TASK-004, TASK-005) import from this module only
+- [x] `schema.py` implemented, peer-reviewed, and docstrings complete
+- [x] No PHI in schema definitions — data populated by generator at runtime only
+- [x] Downstream tasks (TASK-003, TASK-004, TASK-005) import from this module only

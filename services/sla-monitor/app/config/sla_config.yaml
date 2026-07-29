@@ -1,15 +1,56 @@
-# SLA thresholds (minutes) per agent type.
+# SLA configuration per agent type.
 # Source of truth — do NOT duplicate these values in Python code.
 # Referenced by: SLAMonitor (app/monitor/sla_monitor.py)
-# US-021 Technical Notes: {DOCUMENTATION: 30, MEDICATION_RECONCILIATION: 60,
-#                           BED_MANAGEMENT: 15, FOLLOW_UP_CARE: 120,
-#                           PATIENT_COMMUNICATION: 30}
-sla_thresholds:
-  DOCUMENTATION: 30
-  MEDICATION_RECONCILIATION: 60
-  BED_MANAGEMENT: 15
-  FOLLOW_UP_CARE: 120
-  PATIENT_COMMUNICATION: 30
+# US-021: Task-creation SLAs (measured from AgentTask.created_at)
+# US-034: Admission SLAs (measured from encounter.admit_time)
+agents:
+  DOCUMENTATION:
+    threshold_minutes: 30
+    reference_field: created_at
+    escalation_type: SUPERVISOR_ESCALATION
+    priority: NORMAL
+    description: Clinical documentation completion SLA from task creation
+
+  MEDICATION_RECONCILIATION:
+    threshold_minutes: 60
+    reference_field: created_at
+    escalation_type: SUPERVISOR_ESCALATION
+    priority: NORMAL
+    description: Medication reconciliation task completion SLA from task creation
+
+  BED_MANAGEMENT:
+    threshold_minutes: 15
+    reference_field: created_at
+    escalation_type: SUPERVISOR_ESCALATION
+    priority: HIGH
+    description: Bed management and patient placement SLA from task creation
+
+  FOLLOW_UP_CARE:
+    threshold_minutes: 120
+    reference_field: created_at
+    escalation_type: SUPERVISOR_ESCALATION
+    priority: NORMAL
+    description: Follow-up care coordination SLA from task creation
+
+  PATIENT_COMMUNICATION:
+    threshold_minutes: 30
+    reference_field: created_at
+    escalation_type: SUPERVISOR_ESCALATION
+    priority: NORMAL
+    description: Patient communication and notifications SLA from task creation
+
+  # US-034: Admission-time SLA for medication reconciliation (BR-002 / CMS CoP).
+  # Unlike task-creation SLAs above, this threshold is measured from encounter.admit_time.
+  MEDICATION_RECONCILIATION_ADMISSION:
+    threshold_minutes: 1440          # 24 hours
+    reference_field: admit_time      # field on Encounter model used as SLA start
+    escalation_type: CHARGE_PHARMACIST_ESCALATION
+    priority: HIGH
+    description: >
+      CMS Conditions of Participation require medication reconciliation to be
+      completed within 24 hours of admission. Escalate to charge pharmacist
+      when MEDICATION_RECONCILIATION AgentTask remains non-COMPLETED 24 hours
+      after encounter.admit_time.
 
 # Polling interval for the SLA monitor background job (seconds).
 # 5 minutes = 300 seconds (US-021 DoD).

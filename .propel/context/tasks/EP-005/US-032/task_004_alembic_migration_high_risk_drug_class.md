@@ -7,8 +7,8 @@ sprint: 2
 layer: Backend / Database
 estimate: 1h
 priority: Must Have
-status: Draft
-date: 2026-07-16
+status: Done
+date: 2026-07-28
 assignee: Backend Engineer
 upstream: [US-032/TASK-003, US-031/TASK-006]
 ---
@@ -16,7 +16,7 @@ upstream: [US-032/TASK-003, US-031/TASK-006]
 # TASK-004: Alembic Migration — Extend pharmacist_alerts Table for HIGH_RISK_DRUG_CLASS
 
 > **Story:** US-032 | **Epic:** EP-005 | **Sprint:** 2 | **Layer:** Backend / Database | **Est:** 1 h
-> **Status:** Draft | **Date:** 2026-07-16
+> **Status:** ✅ Done | **Date:** 2026-07-28
 
 ---
 
@@ -211,12 +211,12 @@ def downgrade() -> None:
 
 ## Validation
 
-- [ ] `alembic upgrade head` completes without errors on local dev database
-- [ ] `alembic downgrade -1` reverts cleanly; all new columns removed
-- [ ] `pharmacist_alerts` table contains all eight new columns after upgrade
-- [ ] Existing pre-migration rows have `status = 'ACTIVE'` after backfill
-- [ ] `sla_breached` column defaults to `False` for all new inserts
-- [ ] `ix_pharmacist_alerts_status` index present in `\d pharmacist_alerts` psql output
+- [x] `alembic upgrade head` completes without errors on local dev database
+- [x] `alembic downgrade -1` reverts cleanly; all new columns removed
+- [x] `pharmacist_alerts` table contains all eight new columns after upgrade
+- [x] Existing pre-migration rows have `status = 'ACTIVE'` after backfill
+- [x] `sla_breached` column defaults to `False` for all new inserts
+- [x] `ix_pharmacist_alerts_status` index present in `\d pharmacist_alerts` psql output
 
 ---
 

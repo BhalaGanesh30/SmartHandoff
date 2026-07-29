@@ -1,0 +1,44 @@
+# Python cache and compiled files
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+
+# Testing
+.pytest_cache/
+tests/
+*.test.py
+test_*.py
+
+# Development data and models (use GCS in production)
+data/
+models/
+
+# Environment and secrets
+.env
+.env.local
+*.env
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Git
+.git/
+.gitignore
+
+# Documentation
+README.md
+*.md
+!config/*.md
+
+# Logs
+*.log
+
+# OS files
+.DS_Store
+Thumbs.db

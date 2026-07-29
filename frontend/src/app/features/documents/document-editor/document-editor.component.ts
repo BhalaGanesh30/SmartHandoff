@@ -19,7 +19,7 @@ export interface SaveDraftPayload {
 }
 
 @Component({
-  selector: 'app-document-editor',
+  selector: 'sh-document-editor',
   standalone: true,
   imports: [CommonModule, FormsModule],
   template: `
@@ -74,6 +74,7 @@ export class DocumentEditorComponent implements OnInit, OnDestroy {
   @Input() initialContent: Record<string, any> = {};
   @Input() aiDraft: Record<string, any> = {};
   @Input() userRole: string = '';
+  @Input() isSaving = false;
   
   @Output() saveDraft = new EventEmitter<SaveDraftPayload>();
   @Output() approve = new EventEmitter<void>();
@@ -90,7 +91,7 @@ export class DocumentEditorComponent implements OnInit, OnDestroy {
   }
   
   ngOnInit(): void {
-    this.currentSections = { ...this.aiDraft };
+    this.currentSections = { ...this.initialContent };
     
     // Set up debounced auto-save (2000ms)
     this.contentChangeSubject

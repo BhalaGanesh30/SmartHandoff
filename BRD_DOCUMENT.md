@@ -13,6 +13,7 @@
 | **Prepared By** | SmartHandoff Project Team |
 | **Department** | Healthcare IT Solutions |
 
+
 ---
 
 ## Table of Contents

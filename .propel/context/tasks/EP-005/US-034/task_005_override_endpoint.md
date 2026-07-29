@@ -7,8 +7,8 @@ sprint: 2
 layer: Backend
 estimate: 3h
 priority: Must Have
-status: Draft
-date: 2026-07-16
+status: Complete
+date: 2026-07-28
 assignee: Backend Engineer
 upstream: [US-034/TASK-001, US-030/TASK-005]
 ---
@@ -269,11 +269,11 @@ api_router.include_router(tasks_router)
 
 ## Definition of Done Checklist
 
-- [ ] `PATCH /api/v1/encounters/{encounter_id}/tasks/{task_id}/override` returns HTTP 200 on success
-- [ ] `AgentTask.status = COMPLETED`, `completed_at = NOW()`, `sla_escalation_sent_at = None` after override
-- [ ] `AuditLog` record written with `action=TASK_MANUALLY_OVERRIDDEN`, `actor_id`, `note`
-- [ ] HTTP 403 if caller role is neither `charge_pharmacist` nor `pharmacy_supervisor`
-- [ ] HTTP 404 if task not found or does not belong to the encounter
-- [ ] HTTP 409 if task is already `COMPLETED`
-- [ ] HTTP 422 if task is not a `MEDICATION_RECONCILIATION` task
-- [ ] OpenAPI `summary`, `description`, `tags=["tasks"]`, response examples present
+- [x] `PATCH /api/v1/encounters/{encounter_id}/tasks/{task_id}/override` returns HTTP 200 on success
+- [x] `AgentTask.status = COMPLETED`, `completed_at = NOW()`, `sla_escalation_sent_at = None` after override
+- [x] `AuditLog` record written with `action=TASK_MANUALLY_OVERRIDDEN`, `actor_id`, `note`
+- [x] HTTP 403 if caller role is neither `charge_pharmacist` nor `pharmacy_supervisor`
+- [x] HTTP 404 if task not found or does not belong to the encounter
+- [x] HTTP 409 if task is already `COMPLETED`
+- [x] HTTP 422 if task is not a `MEDICATION_RECONCILIATION` task
+- [x] OpenAPI `summary`, `description`, `tags=["tasks"]`, response examples present

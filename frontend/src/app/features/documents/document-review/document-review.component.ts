@@ -29,7 +29,7 @@ import {
 } from 'rxjs';
 
 import { DocumentService } from '../services/document.service';
-import { DocumentEditorComponent } from '../document-editor/document-editor.component';
+import { DocumentEditorComponent, SaveDraftPayload as EditorSaveDraftPayload } from '../document-editor/document-editor.component';
 import { ChangeLogTimelineComponent } from '../change-log-timeline/change-log-timeline.component';
 import { DocumentReviewVm } from '../models/document-review.vm';
 import { AiAssistedLabelBannerComponent } from '../components/ai-assisted-label-banner/ai-assisted-label-banner.component';
@@ -97,11 +97,17 @@ export class DocumentReviewComponent implements OnInit, AfterViewInit, OnDestroy
       });
   }
 
-  onSaveDraft(payload: { content: Record<string, unknown>; diff: Record<string, unknown> }): void {
-    if (!this.documentId) return;
+  onSaveDraft(payload: EditorSaveDraftPayload): void {
+    if (!this.documentId || !this.vm) return;
+
+    const content: Record<string, unknown> = { ...this.vm.content };
+    for (const [field, change] of Object.entries(payload.diff)) {
+      content[field] = change.new_value;
+    }
+
     this.isSaving = true;
     this.documentService
-      .saveDraft(this.documentId, payload)
+      .saveDraft(this.documentId, { content, diff: payload.diff })
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: () => (this.isSaving = false),

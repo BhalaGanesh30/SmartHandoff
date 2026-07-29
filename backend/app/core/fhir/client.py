@@ -651,6 +651,58 @@ class FHIRClient:
         )
         return None
 
+    async def search(
+        self, resource_type: str, params: dict[str, str]
+    ) -> dict[str, Any]:
+        """Generic FHIR search supporting any resource type.
+        
+        Provides a flexible search interface for FHIR resources with custom
+        query parameters. Returns raw FHIR Bundle response for parsing by caller.
+        
+        Used by medication reconciliation agent (US-030) to query:
+        - MedicationStatement?context={encounter_id}
+        - MedicationAdministration?context={encounter_id}
+        - MedicationRequest?encounter={encounter_id}
+        
+        Args:
+            resource_type: FHIR resource name (e.g. "MedicationStatement")
+            params: Query parameters as dict (e.g. {"context": "enc-123"})
+        
+        Returns:
+            FHIR Bundle as dict (raw JSON response)
+        
+        Raises:
+            FHIRClientError: On 4xx status (no retry)
+            FHIRServerError: On 5xx status after exhausted retries
+            FHIRNetworkError: On network failure after exhausted retries
+            CircuitBreakerError: If circuit breaker is open
+        
+        Example:
+            bundle = await client.search(
+                "MedicationStatement", 
+                {"context": "encounter-123"}
+            )
+            entries = [e["resource"] for e in bundle.get("entry", [])]
+        
+        Design refs:
+            US-030 TASK-002 — Generic search method for medication fetcher
+            AIR-011 — Retry + circuit breaker (via _fetch_with_retry)
+            AIR-013 — Rate limiting
+        """
+        await self._rate_limiter.acquire()
+        url = f"{self._settings.FHIR_BASE_URL}/{resource_type}"
+        
+        logger.debug(
+            "FHIR generic search",
+            extra={
+                "event": "fhir_search",
+                "resource_type": resource_type,
+                "params": params,
+            },
+        )
+        
+        return await self._fetch_with_retry(url, params)
+
     async def close(self) -> None:
         """Close HTTP clients and release resources."""
         await self._http_client.aclose()

@@ -18,9 +18,8 @@ import { ChangeLogEntry } from '../models/change-log-entry.model';
 
 /** Payload for auto-save draft endpoint. */
 export interface SaveDraftPayload {
-  content: Record<string, string>;
-  changes: Array<{
-    field: string;
+  content: Record<string, unknown>;
+  diff: Record<string, {
     old_value: unknown;
     new_value: unknown;
   }>;

@@ -7,8 +7,9 @@ sprint: 2
 layer: Backend
 estimate: 4h
 priority: Must Have
-status: Draft
+status: Complete
 date: 2026-07-16
+completed: 2026-07-28
 assignee: Backend Engineer
 upstream: [US-031/TASK-001, US-030]
 ---
@@ -234,18 +235,18 @@ class RxNavInteractionClient:
 
 ## Validation
 
-- [ ] `_map_severity("major")` → `HIGH`
-- [ ] `_map_severity("contraindicated")` → `HIGH`
-- [ ] `_map_severity("moderate")` → `MEDIUM`
-- [ ] `_map_severity("minor")` → `LOW`
-- [ ] `RxNavUnavailableError` raised when RxNav returns HTTP 503
-- [ ] Empty `rxcuis` list returns `[]` without making an HTTP call
-- [ ] `source` field set to `"RXNAV"` in all returned records
+- [x] `_map_severity("major")` → `HIGH`
+- [x] `_map_severity("contraindicated")` → `HIGH`
+- [x] `_map_severity("moderate")` → `MEDIUM`
+- [x] `_map_severity("minor")` → `LOW`
+- [x] `RxNavUnavailableError` raised when RxNav returns HTTP 503
+- [x] Empty `rxcuis` list returns `[]` without making an HTTP call
+- [x] `source` field set to `"RXNAV"` in all returned records
 
 ---
 
 ## Definition of Done
 
-- [ ] `rxnav_client.py` implemented and peer-reviewed
-- [ ] Severity mapping verified against all four RxNav severity labels
+- [x] `rxnav_client.py` implemented and peer-reviewed
+- [x] Severity mapping verified against all four RxNav severity labels
 - [ ] Unit tests in TASK-008 cover HTTP 503 → `RxNavUnavailableError`

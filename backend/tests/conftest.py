@@ -2,6 +2,8 @@
 
 Uses testcontainers to spin up a real PostgreSQL 15 instance matching Cloud SQL.
 The container is shared across all tests in the session for performance.
+
+Note: testcontainers is only required for integration tests, not unit tests.
 """
 from __future__ import annotations
 
@@ -12,11 +14,17 @@ from collections.abc import AsyncGenerator
 
 import pytest
 import pytest_asyncio
-from alembic import command
-from alembic.config import Config
-from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
-from sqlalchemy.pool import NullPool
-from testcontainers.postgres import PostgresContainer
+
+# Integration test dependencies - only imported when needed
+try:
+    from alembic import command
+    from alembic.config import Config
+    from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
+    from sqlalchemy.pool import NullPool
+    from testcontainers.postgres import PostgresContainer
+    _HAS_INTEGRATION_DEPS = True
+except ImportError:
+    _HAS_INTEGRATION_DEPS = False
 
 # Absolute path to the backend/ directory (parent of tests/).  All Alembic
 # operations resolve paths relative to this directory, regardless of the
@@ -27,26 +35,35 @@ _BACKEND_DIR = pathlib.Path(__file__).resolve().parent.parent
 # ── Session-scoped PostgreSQL container ───────────────────────────────────────
 
 @pytest.fixture(scope="session")
+@pytest.mark.integration
 def pg_container():
     """Start a PostgreSQL 15 container for the test session."""
+    if not _HAS_INTEGRATION_DEPS:
+        pytest.skip("testcontainers not installed - integration test only")
     with PostgresContainer("postgres:15-alpine") as postgres:
         yield postgres
 
 
 @pytest.fixture(scope="session")
-def database_url(pg_container: PostgresContainer) -> str:
+@pytest.mark.integration
+def database_url(pg_container) -> str:
     """Return the asyncpg-compatible URL for the test container."""
+    if not _HAS_INTEGRATION_DEPS:
+        pytest.skip("Integration dependencies not installed")
     url = pg_container.get_connection_url()
     # Convert to asyncpg scheme
     return url.replace("postgresql+psycopg2://", "postgresql+asyncpg://")
 
 
 @pytest.fixture(scope="session")
+@pytest.mark.integration
 def apply_migrations(database_url: str) -> None:
     """Apply all Alembic migrations to the test database (session scope).
 
     Runs synchronously before any async tests to ensure the schema is ready.
     """
+    if not _HAS_INTEGRATION_DEPS:
+        pytest.skip("Integration dependencies not installed")
     # Set DATABASE_URL so env.py can resolve the connection string
     os.environ["DATABASE_URL"] = database_url
 
@@ -57,8 +74,11 @@ def apply_migrations(database_url: str) -> None:
 
 
 @pytest.fixture(scope="session")
+@pytest.mark.integration
 def async_engine(database_url: str, apply_migrations):
     """Shared async SQLAlchemy engine connected to the test container."""
+    if not _HAS_INTEGRATION_DEPS:
+        pytest.skip("Integration dependencies not installed")
     engine = create_async_engine(database_url, poolclass=NullPool)
     yield engine
     # asyncio.run() creates a fresh event loop for teardown — safe in Python 3.10+
@@ -67,12 +87,15 @@ def async_engine(database_url: str, apply_migrations):
 
 
 @pytest_asyncio.fixture
+@pytest.mark.integration
 async def db_session(async_engine) -> AsyncGenerator[AsyncSession, None]:
     """Per-test async session with automatic rollback for test isolation.
 
     Each test gets a fresh session. Changes are rolled back after the test
     to keep the database clean for subsequent tests.
     """
+    if not _HAS_INTEGRATION_DEPS:
+        pytest.skip("Integration dependencies not installed")
     session_factory = async_sessionmaker(
         bind=async_engine,
         class_=AsyncSession,
