@@ -9,7 +9,7 @@
  *   US-061 AC Scenario 2 — axes auto-scale to filtered data
  */
 import { Component, Input, OnChanges } from '@angular/core';
-import { BaseChartDirective } from 'ng2-charts';
+import { NgChartsModule } from 'ng2-charts';
 import type { ChartConfiguration } from 'chart.js';
 
 import { KpiDataPoint } from '../analytics.models';
@@ -18,7 +18,7 @@ import { toDateLabels, toSingleSeriesData } from './chart.utils';
 @Component({
   selector: 'app-discharge-time-chart',
   standalone: true,
-  imports: [BaseChartDirective],
+  imports: [NgChartsModule],
   template: `
     @if (hasData) {
       <canvas

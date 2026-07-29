@@ -5,7 +5,7 @@
  *   US-061 DoD — bed_utilisation → Doughnut chart
  */
 import { Component, Input, OnChanges } from '@angular/core';
-import { BaseChartDirective } from 'ng2-charts';
+import { NgChartsModule } from 'ng2-charts';
 import type { ChartConfiguration } from 'chart.js';
 
 import { KpiDataPoint } from '../analytics.models';
@@ -13,7 +13,7 @@ import { KpiDataPoint } from '../analytics.models';
 @Component({
   selector: 'app-bed-utilisation-chart',
   standalone: true,
-  imports: [BaseChartDirective],
+  imports: [NgChartsModule],
   template: `
     @if (latestPct !== null) {
       <canvas
@@ -51,7 +51,7 @@ export class BedUtilisationChartComponent implements OnChanges {
     );
     const latest = sorted.find((d) => d.bed_utilisation_pct !== null);
     this.latestPct =
-      latest?.bed_utilisation_pct !== undefined ? Math.round(latest.bed_utilisation_pct) : null;
+      latest?.bed_utilisation_pct !== undefined && latest?.bed_utilisation_pct !== null ? Math.round(latest.bed_utilisation_pct) : null;
 
     if (this.latestPct !== null) {
       this.chartData = {

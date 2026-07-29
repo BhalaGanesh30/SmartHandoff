@@ -49,7 +49,7 @@
           color="primary"
           class="bed-detail-panel__assign-btn"
           (click)="onAssignBed()"
-          aria-label="Assign bed {{ bed.bedId }}">
+          [attr.aria-label]="'Assign bed ' + bed.bedId">
           Assign Bed
         </button>
       }

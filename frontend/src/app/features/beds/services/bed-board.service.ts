@@ -14,7 +14,7 @@ import { environment } from '@environments/environment';
 @Injectable({ providedIn: 'root' })
 export class BedBoardService {
   private readonly http = inject(HttpClient);
-  private readonly apiBase = `${environment.apiUrl}/api/v1/beds`;
+  private readonly apiBase = `${environment.apiBaseUrl}/api/v1/beds`;
 
   /**
    * Fetches current bed inventory with optional discharge predictions.

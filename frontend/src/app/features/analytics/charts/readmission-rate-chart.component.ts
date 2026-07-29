@@ -8,7 +8,7 @@
  *   US-061 DoD — readmission_rate → Bar chart
  */
 import { Component, Input, OnChanges } from '@angular/core';
-import { BaseChartDirective } from 'ng2-charts';
+import { NgChartsModule } from 'ng2-charts';
 import type { ChartConfiguration } from 'chart.js';
 
 import { KpiDataPoint } from '../analytics.models';
@@ -17,7 +17,7 @@ import { toDateLabels, toSingleSeriesData } from './chart.utils';
 @Component({
   selector: 'app-readmission-rate-chart',
   standalone: true,
-  imports: [BaseChartDirective],
+  imports: [NgChartsModule],
   template: `
     @if (hasData) {
       <canvas

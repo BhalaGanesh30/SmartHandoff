@@ -9,7 +9,7 @@
  *   US-061 DoD — med_recon_rate → Gauge chart
  */
 import { Component, Input, OnChanges } from '@angular/core';
-import { BaseChartDirective } from 'ng2-charts';
+import { NgChartsModule } from 'ng2-charts';
 import type { ChartConfiguration } from 'chart.js';
 
 import { KpiDataPoint } from '../analytics.models';
@@ -17,7 +17,7 @@ import { KpiDataPoint } from '../analytics.models';
 @Component({
   selector: 'app-med-recon-rate-chart',
   standalone: true,
-  imports: [BaseChartDirective],
+  imports: [NgChartsModule],
   template: `
     @if (latestRate !== null) {
       <canvas

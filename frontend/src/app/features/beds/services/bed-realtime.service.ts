@@ -1,6 +1,7 @@
-import { Injectable, inject } from '@angular/core';
+import { Injectable, inject, OnDestroy } from '@angular/core';
 import { SignalRService } from '@core/signalr/signalr.service';
 import { BedUpdateEvent } from '../models/bed.model';
+import { Subject, Subscription } from 'rxjs';
 
 /**
  * UpdateCallback type — callback signature for bed status updates.
@@ -23,28 +24,43 @@ type UpdateCallback = (event: BedUpdateEvent) => void;
  *   }
  */
 @Injectable({ providedIn: 'root' })
-export class BedRealtimeService {
+export class BedRealtimeService implements OnDestroy {
   private readonly signalR = inject(SignalRService);
   private updateCallback: UpdateCallback | null = null;
+  private subscription: Subscription | null = null;
 
   /**
-   * Registers the update callback and attaches the SignalR listener.
+   * Registers the update callback and subscribes to the SignalR event stream.
    * Call once from BedBoardComponent.ngOnInit() after initial data load.
    * @param onUpdate Callback invoked each time a bed_status_changed event is received.
    */
   start(onUpdate: UpdateCallback): void {
     this.updateCallback = onUpdate;
-    this.signalR.on<BedUpdateEvent>('bed_status_changed', event => {
-      this.updateCallback?.(event);
+    this.subscription = this.signalR.bedStatusChanged$.subscribe((event) => {
+      // Map BedStatusChangedPayload to BedUpdateEvent
+      const bedUpdateEvent: BedUpdateEvent = {
+        bedId: event.bedId,
+        status: event.status as any,
+        patientName: '',
+        predictedDischargeTime: null,
+      };
+      this.updateCallback?.(bedUpdateEvent);
     });
   }
 
   /**
-   * Removes the SignalR listener and nulls the callback.
+   * Unsubscribes from the SignalR event stream and nulls the callback.
    * Call from BedBoardComponent.ngOnDestroy() to prevent memory leaks.
    */
   stop(): void {
-    this.signalR.off('bed_status_changed');
+    if (this.subscription) {
+      this.subscription.unsubscribe();
+      this.subscription = null;
+    }
     this.updateCallback = null;
+  }
+
+  ngOnDestroy(): void {
+    this.stop();
   }
 }

@@ -1,9 +1,6 @@
-import { Component, OnInit, ViewChild, inject, signal, computed } from '@angular/core';
-import { BreakpointObserver, Breakpoints } from '@angular/cdk/layout';
+import { Component, OnInit, ViewChild, inject, signal, computed, effect } from '@angular/core';
 import { MatSidenav, MatSidenavModule } from '@angular/material/sidenav';
 import { RouterOutlet } from '@angular/router';
-import { AsyncPipe } from '@angular/common';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 import { SidebarComponent } from './sidebar/sidebar.component';
 import { HeaderComponent } from './header/header.component';
@@ -18,14 +15,12 @@ import { HeaderComponent } from './header/header.component';
 @Component({
   selector: 'app-shell',
   standalone: true,
-  imports: [MatSidenavModule, RouterOutlet, AsyncPipe, SidebarComponent, HeaderComponent],
+  imports: [MatSidenavModule, RouterOutlet, SidebarComponent, HeaderComponent],
   templateUrl: './shell.component.html',
   styleUrl: './shell.component.scss',
 })
 export class ShellComponent implements OnInit {
   @ViewChild('sidenav') sidenav!: MatSidenav;
-
-  private readonly breakpointObserver = inject(BreakpointObserver);
 
   /** True when viewport is mobile (≤ 768px). */
   readonly isMobile = signal(false);
@@ -37,12 +32,16 @@ export class ShellComponent implements OnInit {
   readonly sidenavOpened = computed(() => !this.isMobile());
 
   ngOnInit(): void {
-    this.breakpointObserver
-      .observe([Breakpoints.Handset, Breakpoints.Tablet])
-      .pipe(takeUntilDestroyed())
-      .subscribe((result) => {
-        this.isMobile.set(result.matches);
-      });
+    // Check initial screen size
+    this.updateMobileState();
+
+    // Listen for window resize events
+    window.addEventListener('resize', () => this.updateMobileState());
+  }
+
+  private updateMobileState(): void {
+    // 768px is the standard tablet breakpoint
+    this.isMobile.set(window.innerWidth <= 768);
   }
 
   onSidebarLinkClicked(): void {
@@ -51,3 +50,4 @@ export class ShellComponent implements OnInit {
     }
   }
 }
+

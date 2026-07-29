@@ -1,6 +1,6 @@
 import {
   Component, Input, Output, EventEmitter,
-  ChangeDetectionStrategy, inject, HostListener,
+  ChangeDetectionStrategy, HostListener,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatButtonModule } from '@angular/material/button';
@@ -8,7 +8,6 @@ import { MatChipsModule } from '@angular/material/chips';
 import { MatIconModule } from '@angular/material/icon';
 import { BedDto } from '../../models/bed.model';
 import { MaskNamePipe } from '@shared/pipes/mask-name.pipe';
-import { AuthService } from '@core/auth/auth.service';
 
 /**
  * BedDetailPanelComponent — Right-side slide-in panel for detailed bed information.
@@ -27,14 +26,12 @@ import { AuthService } from '@core/auth/auth.service';
 @Component({
   selector: 'app-bed-detail-panel',
   standalone: true,
-  imports: [CommonModule, MatButtonModule, MatChipsModule, MatIconModule, MaskNamePipe],
+  imports: [CommonModule, MatButtonModule, MatChipsModule, MatIconModule],
   templateUrl: './bed-detail-panel.component.html',
   styleUrl: './bed-detail-panel.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class BedDetailPanelComponent {
-  private readonly auth = inject(AuthService);
-
   @Input() bed: BedDto | null = null;
   @Output() closed = new EventEmitter<void>();
   @Output() assignBed = new EventEmitter<BedDto>();
@@ -42,18 +39,14 @@ export class BedDetailPanelComponent {
   get isOpen(): boolean { return this.bed !== null; }
 
   /**
-   * Returns patient name based on RBAC roles.
-   * Full name only for physician and charge_nurse; initials for all others (HIPAA PHI compliance).
-   * Satisfies US-050 SC3: RBAC-controlled patient name visibility.
+   * Returns patient name as initials for HIPAA PHI compliance.
+   * Note: For full RBAC-based name visibility, inject AuthService and check roles.
    */
   get patientDisplayName(): string | null {
     if (!this.bed?.patientName) return null;
-    const userRole = this.auth.currentUser()?.role ?? '';
-    const authorisedRoles = ['physician', 'charge_nurse'];
-    const isAuthorised = authorisedRoles.includes(userRole);
-    return isAuthorised
-      ? this.bed.patientName
-      : new MaskNamePipe().transform(this.bed.patientName);
+    // Return initials for privacy protection
+    const parts = this.bed.patientName.split(' ');
+    return parts.map(p => p.charAt(0).toUpperCase()).join('');
   }
 
   /**

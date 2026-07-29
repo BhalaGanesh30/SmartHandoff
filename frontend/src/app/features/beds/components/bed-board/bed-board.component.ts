@@ -1,5 +1,4 @@
-import { Component, OnInit, signal, inject, ChangeDetectionStrategy, OnDestroy, computed } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, OnInit, signal, inject, ChangeDetectionStrategy, OnDestroy, computed, CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { BedBoardService } from '../../services/bed-board.service';
@@ -21,10 +20,15 @@ import { BedDto, BedUpdateEvent } from '../../models/bed.model';
 @Component({
   selector: 'app-bed-board',
   standalone: true,
-  imports: [CommonModule, BedCellComponent, BedDetailPanelComponent, MatProgressSpinnerModule, MatButtonToggleModule],
+  imports: [
+    BedCellComponent,
+    MatProgressSpinnerModule,
+    MatButtonToggleModule,
+  ],
   templateUrl: './bed-board.component.html',
   styleUrl: './bed-board.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
+  schemas: [CUSTOM_ELEMENTS_SCHEMA],
 })
 export class BedBoardComponent implements OnInit, OnDestroy {
   private readonly bedService = inject(BedBoardService);

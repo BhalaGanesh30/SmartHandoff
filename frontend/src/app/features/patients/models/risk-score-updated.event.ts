@@ -1,4 +1,4 @@
-import { RiskTier } from '../../../../shared/models/risk-tier.enum';
+import { RiskTier } from '@shared/models/risk-tier.enum';
 
 /**
  * Payload of the `risk_score_updated` SignalR event emitted by the

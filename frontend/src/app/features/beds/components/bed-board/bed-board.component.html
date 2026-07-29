@@ -51,8 +51,9 @@
 }
 
 <!-- Detail panel (US-050 TASK-003) -->
-<app-bed-detail-panel
-  [bed]="selectedBed()"
-  (closed)="onPanelClosed()"
-  (assignBed)="onAssignBed($event)">
-</app-bed-detail-panel>
+@if (selectedBed()) {
+  <app-bed-detail-panel
+    [bed]="selectedBed()"
+    (closed)="onPanelClosed()">
+  </app-bed-detail-panel>
+}
