@@ -122,6 +122,18 @@ class AgentTask(Base, TimestampMixin):
         server_default=sa.text("false"),
         comment="Set to TRUE by SLAMonitor when task exceeds its SLA threshold.",
     )
+    
+    # SLA escalation idempotency — US-034
+    sla_escalation_sent_at: Mapped[datetime | None] = mapped_column(
+        sa.DateTime(timezone=True),
+        nullable=True,
+        default=None,
+        comment=(
+            "Timestamp when a CHARGE_PHARMACIST_ESCALATION notification was last sent "
+            "for this task. NULL means no escalation has been sent. "
+            "Set by MedRecSLAMonitor (US-034); cleared by override endpoint (US-034 AC4)."
+        ),
+    )
 
     # Idempotency: prevents duplicate agent triggers for the same encounter + agent
     pubsub_message_id: Mapped[str | None] = mapped_column(

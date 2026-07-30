@@ -1,0 +1,48 @@
+# SmartHandoff ML Inference Service — Feature Label Mapping
+# Maps raw feature names (training.feature_schema.FEATURE_NAMES) to
+# clinician-friendly labels for SHAP contributing_factors API output.
+#
+# US-039 Technical Notes: "map to human-readable labels in config/feature_labels.yaml"
+# US-039 AC Scenario 4:   contributing_factors returned with human-readable feature names
+
+feature_labels:
+  age: "Patient Age (Years)"
+  los_days: "Length of Stay (Days)"
+  num_comorbidities: "Number of Active Comorbidities"
+  num_prior_admissions_12mo: "Prior Hospital Admissions (12 Months)"
+  medication_count: "Active Medication Count at Discharge"
+  discharge_disposition: "Discharge Destination"
+  primary_diagnosis_group: "Primary Diagnosis Category"
+
+# Ordinal encoding reference — for documentation and future UI display
+# NOT used by predictor.py (values are encoded integers passed in the feature vector)
+discharge_disposition_encoding:
+  0: "Home / Self-Care"
+  1: "Skilled Nursing Facility (SNF)"
+  2: "Inpatient Rehabilitation Facility"
+  3: "Home with Home Health Services"
+  4: "Against Medical Advice (AMA)"
+
+# Primary diagnosis group encoding — 20 groups aligned with CMS MS-DRG major categories
+# Populated by the data engineering team during model training data preparation
+primary_diagnosis_group_encoding:
+  0: "Circulatory System Disorders"
+  1: "Respiratory System Disorders"
+  2: "Musculoskeletal & Connective Tissue"
+  3: "Nervous System Disorders"
+  4: "Digestive System Disorders"
+  5: "Endocrine, Nutritional & Metabolic"
+  6: "Genitourinary System Disorders"
+  7: "Infectious & Parasitic Diseases"
+  8: "Neoplasms"
+  9: "Mental Health & Substance Use"
+  10: "Injuries, Poisoning & Toxic Effects"
+  11: "Factors Influencing Health Status"
+  12: "Skin, Subcutaneous Tissue & Breast"
+  13: "Blood & Blood-Forming Organs"
+  14: "Hepatobiliary & Pancreatic Disorders"
+  15: "Kidney & Urinary Tract Disorders"
+  16: "Female Reproductive System Disorders"
+  17: "Male Reproductive System Disorders"
+  18: "Burns"
+  19: "Other"

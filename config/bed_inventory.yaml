@@ -1,0 +1,223 @@
+# Bed inventory configuration — sourced by BedInventorySeeder on service startup.
+# Fields: unit, room, bed_number, bed_type, isolation_required, gender_designation
+# Bed types: MEDICAL, SURGICAL, ICU, STEP_DOWN, ISOLATION
+# Gender designation: ANY, MALE, FEMALE
+#
+# Design ref: US-035 AC Scenario 4 — 200 beds across 5 units (40 beds per unit)
+# Physical layout: Rooms numbered sequentially, each room has 2 beds (A, B)
+
+units:
+  - unit: "3A"
+    beds:
+      - { room: "301", bed_number: "A", bed_type: "MEDICAL", isolation_required: false, gender_designation: "ANY" }
+      - { room: "301", bed_number: "B", bed_type: "MEDICAL", isolation_required: false, gender_designation: "ANY" }
+      - { room: "302", bed_number: "A", bed_type: "MEDICAL", isolation_required: false, gender_designation: "ANY" }
+      - { room: "302", bed_number: "B", bed_type: "MEDICAL", isolation_required: false, gender_designation: "ANY" }
+      - { room: "303", bed_number: "A", bed_type: "MEDICAL", isolation_required: false, gender_designation: "ANY" }
+      - { room: "303", bed_number: "B", bed_type: "MEDICAL", isolation_required: false, gender_designation: "ANY" }
+      - { room: "304", bed_number: "A", bed_type: "MEDICAL", isolation_required: false, gender_designation: "FEMALE" }
+      - { room: "304", bed_number: "B", bed_type: "MEDICAL", isolation_required: false, gender_designation: "FEMALE" }
+      - { room: "305", bed_number: "A", bed_type: "MEDICAL", isolation_required: false, gender_designation: "MALE" }
+      - { room: "305", bed_number: "B", bed_type: "MEDICAL", isolation_required: false, gender_designation: "MALE" }
+      - { room: "306", bed_number: "A", bed_type: "MEDICAL", isolation_required: false, gender_designation: "ANY" }
+      - { room: "306", bed_number: "B", bed_type: "MEDICAL", isolation_required: false, gender_designation: "ANY" }
+      - { room: "307", bed_number: "A", bed_type: "MEDICAL", isolation_required: false, gender_designation: "ANY" }
+      - { room: "307", bed_number: "B", bed_type: "MEDICAL", isolation_required: false, gender_designation: "ANY" }
+      - { room: "308", bed_number: "A", bed_type: "MEDICAL", isolation_required: false, gender_designation: "ANY" }
+      - { room: "308", bed_number: "B", bed_type: "MEDICAL", isolation_required: false, gender_designation: "ANY" }
+      - { room: "309", bed_number: "A", bed_type: "MEDICAL", isolation_required: true, gender_designation: "ANY" }
+      - { room: "309", bed_number: "B", bed_type: "MEDICAL", isolation_required: true, gender_designation: "ANY" }
+      - { room: "310", bed_number: "A", bed_type: "MEDICAL", isolation_required: false, gender_designation: "ANY" }
+      - { room: "310", bed_number: "B", bed_type: "MEDICAL", isolation_required: false, gender_designation: "ANY" }
+      - { room: "311", bed_number: "A", bed_type: "MEDICAL", isolation_required: false, gender_designation: "ANY" }
+      - { room: "311", bed_number: "B", bed_type: "MEDICAL", isolation_required: false, gender_designation: "ANY" }
+      - { room: "312", bed_number: "A", bed_type: "MEDICAL", isolation_required: false, gender_designation: "ANY" }
+      - { room: "312", bed_number: "B", bed_type: "MEDICAL", isolation_required: false, gender_designation: "ANY" }
+      - { room: "313", bed_number: "A", bed_type: "MEDICAL", isolation_required: false, gender_designation: "ANY" }
+      - { room: "313", bed_number: "B", bed_type: "MEDICAL", isolation_required: false, gender_designation: "ANY" }
+      - { room: "314", bed_number: "A", bed_type: "MEDICAL", isolation_required: false, gender_designation: "ANY" }
+      - { room: "314", bed_number: "B", bed_type: "MEDICAL", isolation_required: false, gender_designation: "ANY" }
+      - { room: "315", bed_number: "A", bed_type: "MEDICAL", isolation_required: false, gender_designation: "ANY" }
+      - { room: "315", bed_number: "B", bed_type: "MEDICAL", isolation_required: false, gender_designation: "ANY" }
+      - { room: "316", bed_number: "A", bed_type: "MEDICAL", isolation_required: false, gender_designation: "ANY" }
+      - { room: "316", bed_number: "B", bed_type: "MEDICAL", isolation_required: false, gender_designation: "ANY" }
+      - { room: "317", bed_number: "A", bed_type: "MEDICAL", isolation_required: false, gender_designation: "ANY" }
+      - { room: "317", bed_number: "B", bed_type: "MEDICAL", isolation_required: false, gender_designation: "ANY" }
+      - { room: "318", bed_number: "A", bed_type: "MEDICAL", isolation_required: false, gender_designation: "ANY" }
+      - { room: "318", bed_number: "B", bed_type: "MEDICAL", isolation_required: false, gender_designation: "ANY" }
+      - { room: "319", bed_number: "A", bed_type: "MEDICAL", isolation_required: false, gender_designation: "ANY" }
+      - { room: "319", bed_number: "B", bed_type: "MEDICAL", isolation_required: false, gender_designation: "ANY" }
+      - { room: "320", bed_number: "A", bed_type: "MEDICAL", isolation_required: false, gender_designation: "ANY" }
+      - { room: "320", bed_number: "B", bed_type: "MEDICAL", isolation_required: false, gender_designation: "ANY" }
+
+  - unit: "3B"
+    beds:
+      - { room: "321", bed_number: "A", bed_type: "SURGICAL", isolation_required: false, gender_designation: "ANY" }
+      - { room: "321", bed_number: "B", bed_type: "SURGICAL", isolation_required: false, gender_designation: "ANY" }
+      - { room: "322", bed_number: "A", bed_type: "SURGICAL", isolation_required: false, gender_designation: "ANY" }
+      - { room: "322", bed_number: "B", bed_type: "SURGICAL", isolation_required: false, gender_designation: "ANY" }
+      - { room: "323", bed_number: "A", bed_type: "SURGICAL", isolation_required: false, gender_designation: "ANY" }
+      - { room: "323", bed_number: "B", bed_type: "SURGICAL", isolation_required: false, gender_designation: "ANY" }
+      - { room: "324", bed_number: "A", bed_type: "SURGICAL", isolation_required: false, gender_designation: "FEMALE" }
+      - { room: "324", bed_number: "B", bed_type: "SURGICAL", isolation_required: false, gender_designation: "FEMALE" }
+      - { room: "325", bed_number: "A", bed_type: "SURGICAL", isolation_required: false, gender_designation: "MALE" }
+      - { room: "325", bed_number: "B", bed_type: "SURGICAL", isolation_required: false, gender_designation: "MALE" }
+      - { room: "326", bed_number: "A", bed_type: "SURGICAL", isolation_required: false, gender_designation: "ANY" }
+      - { room: "326", bed_number: "B", bed_type: "SURGICAL", isolation_required: false, gender_designation: "ANY" }
+      - { room: "327", bed_number: "A", bed_type: "SURGICAL", isolation_required: false, gender_designation: "ANY" }
+      - { room: "327", bed_number: "B", bed_type: "SURGICAL", isolation_required: false, gender_designation: "ANY" }
+      - { room: "328", bed_number: "A", bed_type: "SURGICAL", isolation_required: false, gender_designation: "ANY" }
+      - { room: "328", bed_number: "B", bed_type: "SURGICAL", isolation_required: false, gender_designation: "ANY" }
+      - { room: "329", bed_number: "A", bed_type: "SURGICAL", isolation_required: true, gender_designation: "ANY" }
+      - { room: "329", bed_number: "B", bed_type: "SURGICAL", isolation_required: true, gender_designation: "ANY" }
+      - { room: "330", bed_number: "A", bed_type: "SURGICAL", isolation_required: false, gender_designation: "ANY" }
+      - { room: "330", bed_number: "B", bed_type: "SURGICAL", isolation_required: false, gender_designation: "ANY" }
+      - { room: "331", bed_number: "A", bed_type: "SURGICAL", isolation_required: false, gender_designation: "ANY" }
+      - { room: "331", bed_number: "B", bed_type: "SURGICAL", isolation_required: false, gender_designation: "ANY" }
+      - { room: "332", bed_number: "A", bed_type: "SURGICAL", isolation_required: false, gender_designation: "ANY" }
+      - { room: "332", bed_number: "B", bed_type: "SURGICAL", isolation_required: false, gender_designation: "ANY" }
+      - { room: "333", bed_number: "A", bed_type: "SURGICAL", isolation_required: false, gender_designation: "ANY" }
+      - { room: "333", bed_number: "B", bed_type: "SURGICAL", isolation_required: false, gender_designation: "ANY" }
+      - { room: "334", bed_number: "A", bed_type: "SURGICAL", isolation_required: false, gender_designation: "ANY" }
+      - { room: "334", bed_number: "B", bed_type: "SURGICAL", isolation_required: false, gender_designation: "ANY" }
+      - { room: "335", bed_number: "A", bed_type: "SURGICAL", isolation_required: false, gender_designation: "ANY" }
+      - { room: "335", bed_number: "B", bed_type: "SURGICAL", isolation_required: false, gender_designation: "ANY" }
+      - { room: "336", bed_number: "A", bed_type: "SURGICAL", isolation_required: false, gender_designation: "ANY" }
+      - { room: "336", bed_number: "B", bed_type: "SURGICAL", isolation_required: false, gender_designation: "ANY" }
+      - { room: "337", bed_number: "A", bed_type: "SURGICAL", isolation_required: false, gender_designation: "ANY" }
+      - { room: "337", bed_number: "B", bed_type: "SURGICAL", isolation_required: false, gender_designation: "ANY" }
+      - { room: "338", bed_number: "A", bed_type: "SURGICAL", isolation_required: false, gender_designation: "ANY" }
+      - { room: "338", bed_number: "B", bed_type: "SURGICAL", isolation_required: false, gender_designation: "ANY" }
+      - { room: "339", bed_number: "A", bed_type: "SURGICAL", isolation_required: false, gender_designation: "ANY" }
+      - { room: "339", bed_number: "B", bed_type: "SURGICAL", isolation_required: false, gender_designation: "ANY" }
+      - { room: "340", bed_number: "A", bed_type: "SURGICAL", isolation_required: false, gender_designation: "ANY" }
+      - { room: "340", bed_number: "B", bed_type: "SURGICAL", isolation_required: false, gender_designation: "ANY" }
+
+  - unit: "4A"
+    beds:
+      - { room: "401", bed_number: "A", bed_type: "MEDICAL", isolation_required: false, gender_designation: "ANY" }
+      - { room: "401", bed_number: "B", bed_type: "MEDICAL", isolation_required: false, gender_designation: "ANY" }
+      - { room: "402", bed_number: "A", bed_type: "MEDICAL", isolation_required: false, gender_designation: "ANY" }
+      - { room: "402", bed_number: "B", bed_type: "MEDICAL", isolation_required: false, gender_designation: "ANY" }
+      - { room: "403", bed_number: "A", bed_type: "MEDICAL", isolation_required: false, gender_designation: "ANY" }
+      - { room: "403", bed_number: "B", bed_type: "MEDICAL", isolation_required: false, gender_designation: "ANY" }
+      - { room: "404", bed_number: "A", bed_type: "MEDICAL", isolation_required: false, gender_designation: "FEMALE" }
+      - { room: "404", bed_number: "B", bed_type: "MEDICAL", isolation_required: false, gender_designation: "FEMALE" }
+      - { room: "405", bed_number: "A", bed_type: "MEDICAL", isolation_required: false, gender_designation: "MALE" }
+      - { room: "405", bed_number: "B", bed_type: "MEDICAL", isolation_required: false, gender_designation: "MALE" }
+      - { room: "406", bed_number: "A", bed_type: "MEDICAL", isolation_required: false, gender_designation: "ANY" }
+      - { room: "406", bed_number: "B", bed_type: "MEDICAL", isolation_required: false, gender_designation: "ANY" }
+      - { room: "407", bed_number: "A", bed_type: "STEP_DOWN", isolation_required: false, gender_designation: "ANY" }
+      - { room: "407", bed_number: "B", bed_type: "STEP_DOWN", isolation_required: false, gender_designation: "ANY" }
+      - { room: "408", bed_number: "A", bed_type: "STEP_DOWN", isolation_required: false, gender_designation: "ANY" }
+      - { room: "408", bed_number: "B", bed_type: "STEP_DOWN", isolation_required: false, gender_designation: "ANY" }
+      - { room: "409", bed_number: "A", bed_type: "STEP_DOWN", isolation_required: true, gender_designation: "ANY" }
+      - { room: "409", bed_number: "B", bed_type: "STEP_DOWN", isolation_required: true, gender_designation: "ANY" }
+      - { room: "410", bed_number: "A", bed_type: "MEDICAL", isolation_required: false, gender_designation: "ANY" }
+      - { room: "410", bed_number: "B", bed_type: "MEDICAL", isolation_required: false, gender_designation: "ANY" }
+      - { room: "411", bed_number: "A", bed_type: "MEDICAL", isolation_required: false, gender_designation: "ANY" }
+      - { room: "411", bed_number: "B", bed_type: "MEDICAL", isolation_required: false, gender_designation: "ANY" }
+      - { room: "412", bed_number: "A", bed_type: "MEDICAL", isolation_required: false, gender_designation: "ANY" }
+      - { room: "412", bed_number: "B", bed_type: "MEDICAL", isolation_required: false, gender_designation: "ANY" }
+      - { room: "413", bed_number: "A", bed_type: "MEDICAL", isolation_required: false, gender_designation: "ANY" }
+      - { room: "413", bed_number: "B", bed_type: "MEDICAL", isolation_required: false, gender_designation: "ANY" }
+      - { room: "414", bed_number: "A", bed_type: "MEDICAL", isolation_required: false, gender_designation: "ANY" }
+      - { room: "414", bed_number: "B", bed_type: "MEDICAL", isolation_required: false, gender_designation: "ANY" }
+      - { room: "415", bed_number: "A", bed_type: "MEDICAL", isolation_required: false, gender_designation: "ANY" }
+      - { room: "415", bed_number: "B", bed_type: "MEDICAL", isolation_required: false, gender_designation: "ANY" }
+      - { room: "416", bed_number: "A", bed_type: "MEDICAL", isolation_required: false, gender_designation: "ANY" }
+      - { room: "416", bed_number: "B", bed_type: "MEDICAL", isolation_required: false, gender_designation: "ANY" }
+      - { room: "417", bed_number: "A", bed_type: "MEDICAL", isolation_required: false, gender_designation: "ANY" }
+      - { room: "417", bed_number: "B", bed_type: "MEDICAL", isolation_required: false, gender_designation: "ANY" }
+      - { room: "418", bed_number: "A", bed_type: "MEDICAL", isolation_required: false, gender_designation: "ANY" }
+      - { room: "418", bed_number: "B", bed_type: "MEDICAL", isolation_required: false, gender_designation: "ANY" }
+      - { room: "419", bed_number: "A", bed_type: "MEDICAL", isolation_required: false, gender_designation: "ANY" }
+      - { room: "419", bed_number: "B", bed_type: "MEDICAL", isolation_required: false, gender_designation: "ANY" }
+      - { room: "420", bed_number: "A", bed_type: "MEDICAL", isolation_required: false, gender_designation: "ANY" }
+      - { room: "420", bed_number: "B", bed_type: "MEDICAL", isolation_required: false, gender_designation: "ANY" }
+
+  - unit: "4B"
+    beds:
+      - { room: "421", bed_number: "A", bed_type: "SURGICAL", isolation_required: false, gender_designation: "ANY" }
+      - { room: "421", bed_number: "B", bed_type: "SURGICAL", isolation_required: false, gender_designation: "ANY" }
+      - { room: "422", bed_number: "A", bed_type: "SURGICAL", isolation_required: false, gender_designation: "ANY" }
+      - { room: "422", bed_number: "B", bed_type: "SURGICAL", isolation_required: false, gender_designation: "ANY" }
+      - { room: "423", bed_number: "A", bed_type: "SURGICAL", isolation_required: false, gender_designation: "ANY" }
+      - { room: "423", bed_number: "B", bed_type: "SURGICAL", isolation_required: false, gender_designation: "ANY" }
+      - { room: "424", bed_number: "A", bed_type: "SURGICAL", isolation_required: false, gender_designation: "FEMALE" }
+      - { room: "424", bed_number: "B", bed_type: "SURGICAL", isolation_required: false, gender_designation: "FEMALE" }
+      - { room: "425", bed_number: "A", bed_type: "SURGICAL", isolation_required: false, gender_designation: "MALE" }
+      - { room: "425", bed_number: "B", bed_type: "SURGICAL", isolation_required: false, gender_designation: "MALE" }
+      - { room: "426", bed_number: "A", bed_type: "SURGICAL", isolation_required: false, gender_designation: "ANY" }
+      - { room: "426", bed_number: "B", bed_type: "SURGICAL", isolation_required: false, gender_designation: "ANY" }
+      - { room: "427", bed_number: "A", bed_type: "STEP_DOWN", isolation_required: false, gender_designation: "ANY" }
+      - { room: "427", bed_number: "B", bed_type: "STEP_DOWN", isolation_required: false, gender_designation: "ANY" }
+      - { room: "428", bed_number: "A", bed_type: "STEP_DOWN", isolation_required: false, gender_designation: "ANY" }
+      - { room: "428", bed_number: "B", bed_type: "STEP_DOWN", isolation_required: false, gender_designation: "ANY" }
+      - { room: "429", bed_number: "A", bed_type: "STEP_DOWN", isolation_required: true, gender_designation: "ANY" }
+      - { room: "429", bed_number: "B", bed_type: "STEP_DOWN", isolation_required: true, gender_designation: "ANY" }
+      - { room: "430", bed_number: "A", bed_type: "SURGICAL", isolation_required: false, gender_designation: "ANY" }
+      - { room: "430", bed_number: "B", bed_type: "SURGICAL", isolation_required: false, gender_designation: "ANY" }
+      - { room: "431", bed_number: "A", bed_type: "SURGICAL", isolation_required: false, gender_designation: "ANY" }
+      - { room: "431", bed_number: "B", bed_type: "SURGICAL", isolation_required: false, gender_designation: "ANY" }
+      - { room: "432", bed_number: "A", bed_type: "SURGICAL", isolation_required: false, gender_designation: "ANY" }
+      - { room: "432", bed_number: "B", bed_type: "SURGICAL", isolation_required: false, gender_designation: "ANY" }
+      - { room: "433", bed_number: "A", bed_type: "SURGICAL", isolation_required: false, gender_designation: "ANY" }
+      - { room: "433", bed_number: "B", bed_type: "SURGICAL", isolation_required: false, gender_designation: "ANY" }
+      - { room: "434", bed_number: "A", bed_type: "SURGICAL", isolation_required: false, gender_designation: "ANY" }
+      - { room: "434", bed_number: "B", bed_type: "SURGICAL", isolation_required: false, gender_designation: "ANY" }
+      - { room: "435", bed_number: "A", bed_type: "SURGICAL", isolation_required: false, gender_designation: "ANY" }
+      - { room: "435", bed_number: "B", bed_type: "SURGICAL", isolation_required: false, gender_designation: "ANY" }
+      - { room: "436", bed_number: "A", bed_type: "SURGICAL", isolation_required: false, gender_designation: "ANY" }
+      - { room: "436", bed_number: "B", bed_type: "SURGICAL", isolation_required: false, gender_designation: "ANY" }
+      - { room: "437", bed_number: "A", bed_type: "SURGICAL", isolation_required: false, gender_designation: "ANY" }
+      - { room: "437", bed_number: "B", bed_type: "SURGICAL", isolation_required: false, gender_designation: "ANY" }
+      - { room: "438", bed_number: "A", bed_type: "SURGICAL", isolation_required: false, gender_designation: "ANY" }
+      - { room: "438", bed_number: "B", bed_type: "SURGICAL", isolation_required: false, gender_designation: "ANY" }
+      - { room: "439", bed_number: "A", bed_type: "SURGICAL", isolation_required: false, gender_designation: "ANY" }
+      - { room: "439", bed_number: "B", bed_type: "SURGICAL", isolation_required: false, gender_designation: "ANY" }
+      - { room: "440", bed_number: "A", bed_type: "SURGICAL", isolation_required: false, gender_designation: "ANY" }
+      - { room: "440", bed_number: "B", bed_type: "SURGICAL", isolation_required: false, gender_designation: "ANY" }
+
+  - unit: "ICU"
+    beds:
+      - { room: "ICU-01", bed_number: "A", bed_type: "ICU", isolation_required: false, gender_designation: "ANY" }
+      - { room: "ICU-02", bed_number: "A", bed_type: "ICU", isolation_required: false, gender_designation: "ANY" }
+      - { room: "ICU-03", bed_number: "A", bed_type: "ICU", isolation_required: false, gender_designation: "ANY" }
+      - { room: "ICU-04", bed_number: "A", bed_type: "ICU", isolation_required: false, gender_designation: "ANY" }
+      - { room: "ICU-05", bed_number: "A", bed_type: "ICU", isolation_required: false, gender_designation: "ANY" }
+      - { room: "ICU-06", bed_number: "A", bed_type: "ICU", isolation_required: false, gender_designation: "ANY" }
+      - { room: "ICU-07", bed_number: "A", bed_type: "ICU", isolation_required: false, gender_designation: "ANY" }
+      - { room: "ICU-08", bed_number: "A", bed_type: "ICU", isolation_required: false, gender_designation: "ANY" }
+      - { room: "ICU-09", bed_number: "A", bed_type: "ICU", isolation_required: false, gender_designation: "ANY" }
+      - { room: "ICU-10", bed_number: "A", bed_type: "ICU", isolation_required: false, gender_designation: "ANY" }
+      - { room: "ICU-11", bed_number: "A", bed_type: "ICU", isolation_required: true, gender_designation: "ANY" }
+      - { room: "ICU-12", bed_number: "A", bed_type: "ICU", isolation_required: true, gender_designation: "ANY" }
+      - { room: "ICU-13", bed_number: "A", bed_type: "ICU", isolation_required: false, gender_designation: "ANY" }
+      - { room: "ICU-14", bed_number: "A", bed_type: "ICU", isolation_required: false, gender_designation: "ANY" }
+      - { room: "ICU-15", bed_number: "A", bed_type: "ICU", isolation_required: false, gender_designation: "ANY" }
+      - { room: "ICU-16", bed_number: "A", bed_type: "ICU", isolation_required: false, gender_designation: "ANY" }
+      - { room: "ICU-17", bed_number: "A", bed_type: "ICU", isolation_required: false, gender_designation: "ANY" }
+      - { room: "ICU-18", bed_number: "A", bed_type: "ICU", isolation_required: false, gender_designation: "ANY" }
+      - { room: "ICU-19", bed_number: "A", bed_type: "ICU", isolation_required: false, gender_designation: "ANY" }
+      - { room: "ICU-20", bed_number: "A", bed_type: "ICU", isolation_required: false, gender_designation: "ANY" }
+      - { room: "ICU-21", bed_number: "A", bed_type: "ISOLATION", isolation_required: true, gender_designation: "ANY" }
+      - { room: "ICU-22", bed_number: "A", bed_type: "ISOLATION", isolation_required: true, gender_designation: "ANY" }
+      - { room: "ICU-23", bed_number: "A", bed_type: "ISOLATION", isolation_required: true, gender_designation: "ANY" }
+      - { room: "ICU-24", bed_number: "A", bed_type: "ISOLATION", isolation_required: true, gender_designation: "ANY" }
+      - { room: "ICU-25", bed_number: "A", bed_type: "ICU", isolation_required: false, gender_designation: "ANY" }
+      - { room: "ICU-26", bed_number: "A", bed_type: "ICU", isolation_required: false, gender_designation: "ANY" }
+      - { room: "ICU-27", bed_number: "A", bed_type: "ICU", isolation_required: false, gender_designation: "ANY" }
+      - { room: "ICU-28", bed_number: "A", bed_type: "ICU", isolation_required: false, gender_designation: "ANY" }
+      - { room: "ICU-29", bed_number: "A", bed_type: "ICU", isolation_required: false, gender_designation: "ANY" }
+      - { room: "ICU-30", bed_number: "A", bed_type: "ICU", isolation_required: false, gender_designation: "ANY" }
+      - { room: "ICU-31", bed_number: "A", bed_type: "ICU", isolation_required: false, gender_designation: "ANY" }
+      - { room: "ICU-32", bed_number: "A", bed_type: "ICU", isolation_required: false, gender_designation: "ANY" }
+      - { room: "ICU-33", bed_number: "A", bed_type: "ICU", isolation_required: false, gender_designation: "ANY" }
+      - { room: "ICU-34", bed_number: "A", bed_type: "ICU", isolation_required: false, gender_designation: "ANY" }
+      - { room: "ICU-35", bed_number: "A", bed_type: "ICU", isolation_required: false, gender_designation: "ANY" }
+      - { room: "ICU-36", bed_number: "A", bed_type: "ICU", isolation_required: false, gender_designation: "ANY" }
+      - { room: "ICU-37", bed_number: "A", bed_type: "ICU", isolation_required: false, gender_designation: "ANY" }
+      - { room: "ICU-38", bed_number: "A", bed_type: "ICU", isolation_required: false, gender_designation: "ANY" }
+      - { room: "ICU-39", bed_number: "A", bed_type: "ICU", isolation_required: false, gender_designation: "ANY" }
+      - { room: "ICU-40", bed_number: "A", bed_type: "ICU", isolation_required: false, gender_designation: "ANY" }

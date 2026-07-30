@@ -7,7 +7,7 @@ sprint: 2
 layer: Backend
 estimate: 4h
 priority: Must Have
-status: Draft
+status: Done
 date: 2026-07-16
 assignee: Backend Engineer
 upstream: [US-032/TASK-003, US-032/TASK-004, US-031/TASK-005]

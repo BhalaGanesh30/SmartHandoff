@@ -14,6 +14,9 @@ import uvicorn
 from fastapi import FastAPI
 
 from app.monitor.sla_monitor import SLAMonitor
+from app.publisher.charge_pharmacist_escalation_publisher import (
+    ChargePharmacistEscalationPublisher,
+)
 from app.publisher.escalation_publisher import EscalationPublisher
 from app.settings import settings
 
@@ -28,11 +31,22 @@ logger = logging.getLogger(__name__)
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """FastAPI lifespan context manager — starts and stops the SLA monitor."""
+    # US-021: Supervisor escalation publisher
     publisher = EscalationPublisher(
         project_id=settings.gcp_project_id,
         topic_id="notification-requests",
     )
-    monitor = SLAMonitor(publisher=publisher)
+    
+    # US-034: Charge pharmacist escalation publisher for medication reconciliation SLA
+    medrec_publisher = ChargePharmacistEscalationPublisher(
+        project_id=settings.gcp_project_id,
+        topic_id="notification-requests",
+    )
+    
+    monitor = SLAMonitor(
+        publisher=publisher,
+        medrec_publisher=medrec_publisher,
+    )
     monitor.start()
     logger.info("SLA Monitor service started")
     yield

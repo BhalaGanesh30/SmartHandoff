@@ -69,6 +69,13 @@ class AgentTask(Base):
         server_default=sa.text("false"),
     )
 
+    # US-034: SLA escalation idempotency timestamp
+    sla_escalation_sent_at: Mapped[datetime | None] = mapped_column(
+        sa.DateTime(timezone=True),
+        nullable=True,
+        comment="Timestamp when CHARGE_PHARMACIST_ESCALATION notification was last sent (US-034)",
+    )
+
     # Supervisor assignment for escalation
     supervisor_id: Mapped[uuid.UUID | None] = mapped_column(
         sa.UUID(as_uuid=True),

@@ -137,6 +137,18 @@ class Document(Base, TimestampMixin):
         ),
     )
 
+    # US-033: Patient-readable medication change summary
+    medications_section: Mapped[dict | None] = mapped_column(
+        JSONB,
+        nullable=True,
+        default=None,
+        comment=(
+            "Patient-readable medication change summary (MedicationSummaryOutput schema). "
+            "Populated by MedicationSummaryGenerator after reconciliation. "
+            "Keys: new, stopped, changed, continued (each a list of medication dicts)."
+        ),
+    )
+
     approved_by_id: Mapped[uuid.UUID | None] = mapped_column(
         sa.UUID(as_uuid=True),
         sa.ForeignKey("app_user.id", ondelete="SET NULL"),

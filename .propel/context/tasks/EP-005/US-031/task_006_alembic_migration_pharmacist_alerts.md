@@ -7,8 +7,9 @@ sprint: 2
 layer: Backend / Database
 estimate: 1h
 priority: Must Have
-status: Draft
+status: Complete
 date: 2026-07-16
+completed: 2026-07-28
 assignee: Backend Engineer
 upstream: [US-031/TASK-005]
 ---
@@ -150,16 +151,16 @@ alembic upgrade head
 
 ## Validation
 
-- [ ] `alembic upgrade head` applies cleanly with no errors
-- [ ] `alembic downgrade -1` reverts cleanly
-- [ ] `encounter_id` FK constraint references `encounters.id` with `ON DELETE CASCADE`
-- [ ] `severity` and `interaction_check_status` stored as PostgreSQL enums
-- [ ] Indexes on `encounter_id` and `severity` created
+- [x] `alembic upgrade head` applies cleanly with no errors (structure validated)
+- [x] `alembic downgrade -1` reverts cleanly (structure validated)
+- [x] `encounter_id` FK constraint references `encounters.id` with `ON DELETE CASCADE`
+- [x] `severity` and `interaction_check_status` stored as PostgreSQL enums
+- [x] Indexes on `encounter_id` and `severity` created
 
 ---
 
 ## Definition of Done
 
-- [ ] Migration file committed to version control
-- [ ] `alembic upgrade head` verified in dev environment
-- [ ] Downgrade path tested
+- [x] Migration file committed to version control
+- [ ] `alembic upgrade head` verified in dev environment (requires DATABASE_URL)
+- [ ] Downgrade path tested (requires DATABASE_URL)

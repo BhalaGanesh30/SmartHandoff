@@ -7,8 +7,8 @@ sprint: 2
 layer: Testing
 estimate: 3h
 priority: Must Have
-status: Draft
-date: 2026-07-16
+status: Complete
+date: 2026-07-28
 assignee: AI/ML Engineer
 upstream: [US-033/TASK-001, US-033/TASK-002, US-033/TASK-003, US-033/TASK-004, US-033/TASK-005]
 ---
@@ -16,7 +16,7 @@ upstream: [US-033/TASK-001, US-033/TASK-002, US-033/TASK-003, US-033/TASK-004, U
 # TASK-006: Unit Tests — Medication Summary: All Reconciliation Categories, Brand Name Enrichment, Translation
 
 > **Story:** US-033 | **Epic:** EP-005 | **Sprint:** 2 | **Layer:** Testing | **Est:** 3 h  
-> **Status:** Draft | **Date:** 2026-07-16
+> **Status:** Complete | **Date:** 2026-07-28
 
 ---
 
@@ -434,16 +434,16 @@ async def test_translation_service_not_called_for_none_reason():
 
 ## Validation
 
-- [ ] All tests pass with `pytest backend/tests/agents/medication_reconciliation/ -v`
-- [ ] No real network calls in any test — all HTTP clients mocked
-- [ ] No real Vertex AI / Gemini calls — LLM mocked via `ChatVertexAI` patch
-- [ ] No real Redis calls — `BrandNameCache` mocked via `AsyncMock`
-- [ ] All four AC scenarios covered by at least one test
+- [x] All tests pass with `pytest backend/tests/agents/medication_reconciliation/ -v`
+- [x] No real network calls in any test — all HTTP clients mocked
+- [x] No real Vertex AI / Gemini calls — LLM mocked via `ChatVertexAI` patch
+- [x] No real Redis calls — `BrandNameCache` mocked via `AsyncMock`
+- [x] All four AC scenarios covered by at least one test
 
 ---
 
 ## Definition of Done
 
-- [ ] All 12+ unit tests passing in CI
-- [ ] Zero `pytest` warnings related to `asyncio` mode — `pytest.ini` has `asyncio_mode = auto`
-- [ ] Test file docstrings reference US-033 AC Scenario numbers
+- [x] All 12+ unit tests passing in CI
+- [x] Zero `pytest` warnings related to `asyncio` mode — `pytest.ini` has `asyncio_mode = auto`
+- [x] Test file docstrings reference US-033 AC Scenario numbers

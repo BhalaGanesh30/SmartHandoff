@@ -136,29 +136,51 @@ Successfully implemented the foundational data layer for the Medication Reconcil
 
 ## Validation Results
 
+### Latest Validation Run: 2026-07-27
+
 ```
-================================================================================
-US-030 TASK-001 VALIDATION: Medication Reconciliation ORM & Schema
-================================================================================
+======================================================================
+US-030 TASK-001 Validation: Medication ORM Models, Enums, and Migration
+======================================================================
 
-✓ Step 1: Enum Validation - PASSED
-  - ReconciliationCategory: 4 values
-  - ReconciliationFlag: 2 values
-  - MedicationListSource: 3 values
+=== AC1: Enums Defined ===
+✓ ReconciliationCategory has 4 values: {'NEW', 'DOSE_CHANGED', 'CONTINUED', 'STOPPED'}
+✓ ReconciliationFlag has 2 values: {'DUPLICATE', 'STOPPED_WITHOUT_ORDER'}
+✓ MedicationListSource has 3 values: {'PRE_ADMIT', 'INPATIENT', 'DISCHARGE'}
+✓ AC1 PASSED: All enums defined with correct values
 
-✓ Step 2: Pydantic Schema Serialization - PASSED
-  - MedicationReconciliationResult: Serializes correctly
-  - MedicationReconciliationResponse: Serializes correctly
+=== AC2: ORM Model Extended ===
+✓ Column 'rxnorm_cui' exists (type: String)
+✓ Column 'reconciliation_category' exists (type: Enum)
+✓ Column 'flags' exists (type: ARRAY)
+✓ Column 'dose_value' exists (type: Float)
+✓ Column 'dose_unit' exists (type: String)
+✓ Column 'sources' exists (type: ARRAY)
+✓ Column 'reconciliation_completed_at' exists (type: DateTime)
+✓ AC2 PASSED: ORM model extended with all reconciliation fields
 
-✓ Step 3: Migration File Validation - PASSED
-  - Migration file exists
-  - All required elements present
-  - upgrade() and downgrade() functions defined
+=== AC3: Pydantic Response Schema ===
+✓ MedicationReconciliationResult serializes correctly
+  Sample JSON: {"id":"...","name":"Metformin 500mg oral","rxnorm_cui":"860975",
+                "reconciliation_category":"CONTINUED","pre_admit":true,
+                "inpatient":true,"discharge":true,"flags":["DUPLICATE"],...}
+✓ MedicationReconciliationResponse serializes correctly
+✓ AC3 PASSED: Pydantic schemas serialize correctly
 
-================================================================================
-All US-030 TASK-001 validations PASSED
-================================================================================
+=== AC4: Alembic Migration ===
+✓ Migration file exists: n8k1j4f69i63_add_medication_reconciliation_fields.py
+✓ Migration creates all three ENUM types
+✓ Migration adds all 7 required columns
+✓ Migration creates required indexes
+✓ Migration has downgrade function
+✓ AC4 PASSED: Alembic migration file is complete and correct
+
+======================================================================
+✅ ALL ACCEPTANCE CRITERIA PASSED
+======================================================================
 ```
+
+**Validation Script:** [`validate_task001_medication_orm.py`](validate_task001_medication_orm.py)
 
 ---
 

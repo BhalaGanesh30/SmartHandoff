@@ -112,6 +112,42 @@ class Settings:
         """
         return os.environ.get("FHIR_MRN_SYSTEM", "http://hospital.org/mrn")
 
+    # --- RxNav API (US-030 TASK-003) ---
+
+    @property
+    def RXNAV_BASE_URL(self) -> str:
+        """Base URL for NIH RxNav REST API.
+
+        Used for RxNorm CUI lookups during medication reconciliation.
+        Public API, no authentication required.
+
+        Default: https://rxnav.nlm.nih.gov/REST
+
+        Can be overridden via RXNAV_BASE_URL environment variable for
+        testing or alternative RxNav deployments.
+        """
+        return os.environ.get(
+            "RXNAV_BASE_URL", "https://rxnav.nlm.nih.gov/REST"
+        )
+
+    @property
+    def RXNAV_TIMEOUT_SECONDS(self) -> int:
+        """HTTP timeout for RxNav CUI lookup requests (in seconds).
+
+        Default: 5 seconds
+
+        RxNav API is public and generally fast, but timeouts can occur.
+        Non-fatal failures (return None for CUI) to allow reconciliation
+        to proceed with name-based matching as fallback.
+
+        Can be overridden via RXNAV_TIMEOUT_SECONDS environment variable.
+        """
+        value = os.environ.get("RXNAV_TIMEOUT_SECONDS", "5")
+        try:
+            return int(value)
+        except ValueError:
+            return 5
+
     # --- GCP Configuration (US-019) ---
 
     @property
@@ -130,6 +166,52 @@ class Settings:
                 "GCP_PROJECT_ID environment variable is not set. "
                 "Set it in Cloud Run environment configuration."
             )
+        return value
+
+    @property
+    def PATIENT_EVENTS_TOPIC(self) -> str:
+        """Pub/Sub topic for patient-related events (US-042).
+        
+        Published to by the chatbot agent (EP-008) with URGENCY_FLAG_SET events.
+        Format: projects/{project_id}/topics/patient-events
+        
+        Defaults to using GCP_PROJECT_ID if not explicitly set.
+        """
+        value = os.environ.get("PATIENT_EVENTS_TOPIC", "")
+        if not value:
+            project_id = self.GCP_PROJECT_ID
+            value = f"projects/{project_id}/topics/patient-events"
+        return value
+
+    @property
+    def URGENCY_ESCALATION_SUBSCRIPTION(self) -> str:
+        """Pub/Sub subscription for URGENCY_FLAG_SET events (US-042).
+        
+        Consumed by the follow-up care agent's CareEscalationMonitor.
+        Format: projects/{project_id}/subscriptions/urgency-escalation-sub
+        
+        Defaults to using GCP_PROJECT_ID if not explicitly set.
+        """
+        value = os.environ.get("URGENCY_ESCALATION_SUBSCRIPTION", "")
+        if not value:
+            project_id = self.GCP_PROJECT_ID
+            value = f"projects/{project_id}/subscriptions/urgency-escalation-sub"
+        return value
+
+    @property
+    def NOTIFICATION_REQUESTS_TOPIC(self) -> str:
+        """Pub/Sub topic for outbound notification dispatch requests (US-042, US-064).
+        
+        Published to by agents when notifications need to be sent.
+        Consumed by the notification service for SMS/email dispatch.
+        Format: projects/{project_id}/topics/notification-requests
+        
+        Defaults to using GCP_PROJECT_ID if not explicitly set.
+        """
+        value = os.environ.get("NOTIFICATION_REQUESTS_TOPIC", "")
+        if not value:
+            project_id = self.GCP_PROJECT_ID
+            value = f"projects/{project_id}/topics/notification-requests"
         return value
 
     # --- Azure SignalR Service (US-022) ---
@@ -267,9 +349,29 @@ class Settings:
         """
         value = os.environ.get(
             "CORS_ORIGINS",
-            "http://localhost:4200,https://smarthandoff-frontend-52528248131.us-central1.run.app"
+            "http://localhost:4200,https://smarthandoff-frontend-52528248131.us-central1.run.app",
         )
         return [origin.strip() for origin in value.split(",") if origin.strip()]
+
+    # --- Redis (Cloud Memorystore) ---
+
+    @property
+    def REDIS_URL(self) -> str:
+        """Redis connection URL for Cloud Memorystore.
+
+        Format: redis://host:port or redis://host:port/db_number
+        Loaded from environment variable REDIS_URL.
+
+        Raises:
+            RuntimeError: If REDIS_URL is not set.
+        """
+        value = os.environ.get("REDIS_URL", "")
+        if not value:
+            raise RuntimeError(
+                "REDIS_URL environment variable is not set. "
+                "Set it in Cloud Run environment configuration or .env file."
+            )
+        return value
 
 
 @lru_cache(maxsize=1)
