@@ -90,6 +90,14 @@ export class AuthService {
   }
 
   /**
+   * Set the application JWT token directly (for code exchange flow).
+   * Used when the backend already returned the final JWT.
+   */
+  setToken(token: string): void {
+    this.#setSession(token);
+  }
+
+  /**
    * Store the JWT and start the 30-minute idle timer (US-059).
    * Token is stored ONLY in memory — never in localStorage or cookies.
    */

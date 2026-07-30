@@ -247,6 +247,30 @@ class Settings:
             )
         return value
 
+    # --- CORS Configuration ---
+
+    @property
+    def CORS_ORIGINS(self) -> list[str]:
+        """Allowed origins for CORS requests.
+
+        Comma-separated list of allowed origins (e.g., frontend URLs).
+        Supports wildcards for Cloud Run dynamic URLs:
+        - https://*-dev-*.run.app (development)
+        - https://*-staging-*.run.app (staging)
+        - https://app.smarthandoff.com (production)
+
+        Loaded from CORS_ORIGINS environment variable.
+        Defaults to localhost:4200 for local development if not set.
+
+        Example:
+            CORS_ORIGINS=http://localhost:4200,https://smarthandoff-frontend-52528248131.us-central1.run.app
+        """
+        value = os.environ.get(
+            "CORS_ORIGINS",
+            "http://localhost:4200,https://smarthandoff-frontend-52528248131.us-central1.run.app"
+        )
+        return [origin.strip() for origin in value.split(",") if origin.strip()]
+
 
 @lru_cache(maxsize=1)
 def get_settings() -> Settings:

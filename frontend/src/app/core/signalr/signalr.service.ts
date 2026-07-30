@@ -143,8 +143,7 @@ export class SignalRService implements OnDestroy {
         } catch (error) {
           // Reconnect re-fetch is best-effort — log only.
           console.error('Failed to re-fetch tasks on reconnect:', error);
-        }orEncounter(this.currentEncounterId).toPromise();
-        // and emit synthetic task_updated events for each task
+        }
       }
     });
 

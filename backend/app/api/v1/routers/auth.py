@@ -15,10 +15,13 @@ Design refs:
 from __future__ import annotations
 
 import logging
+import os
 from typing import Annotated
 
+import httpx
 import redis
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi.responses import Response
 from pydantic import BaseModel, Field
 from sqlalchemy import update as sa_update
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -147,3 +150,170 @@ async def logout(
         },
     )
     return {"message": "Logged out successfully"}
+
+
+# ── POST /api/v1/auth/exchange-code ───────────────────────────────────────────
+
+class CodeExchangeRequest(BaseModel):
+    code: str = Field(..., description="Authorization code from OAuth callback")
+    code_verifier: str = Field(..., description="PKCE code verifier")
+    redirect_uri: str = Field(..., description="Redirect URI used in the authorization request")
+
+
+def _get_client_secret() -> str:
+    """Get OAuth client secret from environment."""
+    secret = os.environ.get("OAUTH_CLIENT_SECRET", "")
+    if not secret:
+        # For testing without client_secret (development only)
+        logger.warning("OAUTH_CLIENT_SECRET not set - using empty string")
+        return ""
+    return secret
+
+
+def _get_client_id() -> str:
+    """Get OAuth client ID from environment."""
+    client_id = os.environ.get("OIDC_CLIENT_ID", "")
+    if not client_id:
+        raise RuntimeError("OIDC_CLIENT_ID environment variable is not set.")
+    return client_id
+
+
+@router.options(
+    "/exchange-code",
+    summary="CORS preflight for exchange-code endpoint",
+    status_code=status.HTTP_200_OK,
+)
+async def exchange_code_options():
+    """Handle CORS preflight OPTIONS request for exchange-code endpoint."""
+    from app.core.config import get_settings
+    settings = get_settings()
+    origin = settings.CORS_ORIGINS[0] if settings.CORS_ORIGINS else "*"
+    return Response(
+        status_code=status.HTTP_200_OK,
+        headers={
+            "Access-Control-Allow-Origin": origin,
+            "Access-Control-Allow-Methods": "POST, OPTIONS",
+            "Access-Control-Allow-Headers": "*",
+            "Access-Control-Allow-Credentials": "true",
+            "Access-Control-Max-Age": "3600",
+        },
+    )
+
+
+@router.post(
+    "/exchange-code",
+    response_model=TokenResponse,
+    summary="Exchange authorization code for SmartHandoff JWT",
+    description=(
+        "Accepts an OAuth authorization code from the frontend, exchanges it "
+        "with Google for an id_token (using client_secret), validates the "
+        "id_token, and issues a SmartHandoff application JWT."
+    ),
+)
+async def exchange_code(
+    body: CodeExchangeRequest,
+    db: Annotated[AsyncSession, Depends(get_write_db)],
+) -> TokenResponse:
+    """Exchange OAuth authorization code for SmartHandoff application JWT.
+    
+    This endpoint securely handles the code-to-token exchange with Google OAuth,
+    keeping the client_secret on the backend.
+    """
+    
+    # Step 1: Exchange authorization code for id_token with Google
+    token_url = "https://oauth2.googleapis.com/token"
+    
+    client_id = _get_client_id()
+    client_secret = _get_client_secret()
+    
+    # DEBUG: Log OAuth configuration
+    logger.warning(f"🔍 OAuth Config - Client ID: {client_id}")
+    logger.warning(f"🔍 OAuth Config - Has Client Secret: {bool(client_secret)}")
+    logger.warning(f"🔍 OAuth Config - Client Secret (first 10 chars): {client_secret[:10] if client_secret else 'None'}...")
+    logger.warning(f"🔍 OAuth Config - Redirect URI: {body.redirect_uri}")
+    logger.warning(f"🔍 OAuth Config - Code (first 20 chars): {body.code[:20]}...")
+    logger.warning(f"🔍 OAuth Config - Code Verifier (first 20 chars): {body.code_verifier[:20]}...")
+    
+    token_request_data = {
+        "grant_type": "authorization_code",
+        "code": body.code,
+        "redirect_uri": body.redirect_uri,
+        "client_id": client_id,
+        "code_verifier": body.code_verifier,
+    }
+    
+    # Add client_secret - required for Web Application OAuth clients
+    if client_secret:
+        token_request_data["client_secret"] = client_secret
+        logger.warning("🔍 Using Web Application OAuth flow with PKCE + client_secret")
+    else:
+        logger.warning("⚠️ No client_secret found - using PKCE-only flow")
+    
+    try:
+        async with httpx.AsyncClient() as client:
+            response = await client.post(
+                token_url,
+                data=token_request_data,
+                headers={"Content-Type": "application/x-www-form-urlencoded"},
+                timeout=10.0,
+            )
+            response.raise_for_status()
+            token_data = response.json()
+            logger.info(
+                "Token exchange successful. Response keys: %s, has id_token: %s",
+                list(token_data.keys()),
+                'id_token' in token_data
+            )
+    except httpx.HTTPError as exc:
+        logger.error(
+            "Failed to exchange authorization code: %s - Response: %s",
+            exc,
+            exc.response.text if hasattr(exc, 'response') else 'No response',
+            extra={"event_type": "auth_failure", "reason": "code_exchange_failed"},
+        )
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail=f"Failed to exchange authorization code: {str(exc)}",
+        ) from exc
+    
+    id_token = token_data.get("id_token")
+    if not id_token:
+        logger.error("No id_token in Google OAuth response. Response keys: %s", list(token_data.keys()))
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid OAuth response - no id_token",
+        )
+    
+    # Log token header for debugging (doesn't expose sensitive data)
+    try:
+        import base64
+        import json
+        header = json.loads(base64.urlsafe_b64decode(id_token.split('.')[0] + '=='))
+        logger.info("id_token header: %s", header)
+    except Exception as e:
+        logger.warning("Failed to decode id_token header: %s", e)
+    
+    # Step 2: Validate the id_token
+    oidc_claims = await validate_id_token(id_token)
+    
+    # Step 3: Issue SmartHandoff application JWT
+    app_token, jti = issue_app_jwt(oidc_claims)
+    
+    # Step 4: Persist the issued jti for deprovisioning
+    try:
+        await db.execute(
+            sa_update(AppUser)
+            .where(AppUser.idp_subject == oidc_claims["sub"])
+            .values(current_jti=jti)
+        )
+        await db.commit()
+    except Exception as exc:  # noqa: BLE001
+        logger.warning(
+            "Failed to persist current_jti for sub=%s: %s",
+            oidc_claims.get("sub"),
+            exc,
+            extra={"event_type": "jti_persist_failure"},
+        )
+        await db.rollback()
+    
+    return TokenResponse(access_token=app_token)
