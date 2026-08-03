@@ -14,6 +14,7 @@ Design refs:
 """
 from __future__ import annotations
 
+import json
 import logging
 import os
 from typing import Annotated
@@ -162,19 +163,29 @@ class CodeExchangeRequest(BaseModel):
 
 def _get_client_secret() -> str:
     """Get OAuth client secret from environment."""
-    secret = os.environ.get("OAUTH_CLIENT_SECRET", "")
+    secret = (
+        os.environ.get("OAUTH_CLIENT_SECRET")
+        or os.environ.get("GOOGLE_OAUTH_CLIENT_SECRET")
+        or ""
+    )
     if not secret:
         # For testing without client_secret (development only)
-        logger.warning("OAUTH_CLIENT_SECRET not set - using empty string")
+        logger.error("❌ OAuth client secret NOT SET! Checked: OAUTH_CLIENT_SECRET, GOOGLE_OAUTH_CLIENT_SECRET - Google will reject the token exchange with 400 Bad Request")
+        logger.error("💡 SOLUTION: Set the OAUTH_CLIENT_SECRET environment variable in PowerShell BEFORE starting uvicorn")
         return ""
+    logger.info("✅ OAuth client secret is set (first 10 chars: %s...)", secret[:10])
     return secret
 
 
 def _get_client_id() -> str:
     """Get OAuth client ID from environment."""
-    client_id = os.environ.get("OIDC_CLIENT_ID", "")
+    client_id = (
+        os.environ.get("OIDC_CLIENT_ID")
+        or os.environ.get("GOOGLE_OAUTH_CLIENT_ID")
+    )
     if not client_id:
-        raise RuntimeError("OIDC_CLIENT_ID environment variable is not set.")
+        raise RuntimeError("❌ OIDC_CLIENT_ID or GOOGLE_OAUTH_CLIENT_ID environment variable is not set. Please configure it in your .env or system environment.")
+    logger.info("✅ Using OAuth client ID: %s...", client_id[:20])
     return client_id
 
 
@@ -220,100 +231,169 @@ async def exchange_code(
     keeping the client_secret on the backend.
     """
     
-    # Step 1: Exchange authorization code for id_token with Google
-    token_url = "https://oauth2.googleapis.com/token"
-    
-    client_id = _get_client_id()
-    client_secret = _get_client_secret()
-    
-    # DEBUG: Log OAuth configuration
-    logger.warning(f"🔍 OAuth Config - Client ID: {client_id}")
-    logger.warning(f"🔍 OAuth Config - Has Client Secret: {bool(client_secret)}")
-    logger.warning(f"🔍 OAuth Config - Client Secret (first 10 chars): {client_secret[:10] if client_secret else 'None'}...")
-    logger.warning(f"🔍 OAuth Config - Redirect URI: {body.redirect_uri}")
-    logger.warning(f"🔍 OAuth Config - Code (first 20 chars): {body.code[:20]}...")
-    logger.warning(f"🔍 OAuth Config - Code Verifier (first 20 chars): {body.code_verifier[:20]}...")
-    
-    token_request_data = {
-        "grant_type": "authorization_code",
-        "code": body.code,
-        "redirect_uri": body.redirect_uri,
-        "client_id": client_id,
-        "code_verifier": body.code_verifier,
-    }
-    
-    # Add client_secret - required for Web Application OAuth clients
-    if client_secret:
-        token_request_data["client_secret"] = client_secret
-        logger.warning("🔍 Using Web Application OAuth flow with PKCE + client_secret")
-    else:
-        logger.warning("⚠️ No client_secret found - using PKCE-only flow")
-    
     try:
-        async with httpx.AsyncClient() as client:
-            response = await client.post(
-                token_url,
-                data=token_request_data,
-                headers={"Content-Type": "application/x-www-form-urlencoded"},
-                timeout=10.0,
+        # Step 1: Exchange authorization code for id_token with Google
+        token_url = "https://oauth2.googleapis.com/token"
+
+        client_id = _get_client_id()
+        client_secret = _get_client_secret()
+
+        # Log safe OAuth metadata only (avoid logging secrets or auth artifacts).
+        logger.info("OAuth code exchange requested for redirect_uri=%s", body.redirect_uri)
+
+        token_request_data = {
+            "grant_type": "authorization_code",
+            "code": body.code,
+            "redirect_uri": body.redirect_uri,
+            "client_id": client_id,
+            "code_verifier": body.code_verifier,
+        }
+
+        # Add client_secret - required for Web Application OAuth clients
+        if client_secret:
+            token_request_data["client_secret"] = client_secret
+            logger.info("✅ Using Web Application OAuth flow with PKCE + client_secret")
+            logger.debug("📤 Sending to Google token endpoint:")
+            logger.debug("   - grant_type: authorization_code")
+            logger.debug("   - redirect_uri: %s", body.redirect_uri)
+            logger.debug("   - client_id: %s", client_id)
+            logger.debug("   - code_verifier: (PKCE verifier, length=%d)", len(body.code_verifier))
+            logger.debug("   - code: (auth code, length=%d)", len(body.code))
+            logger.debug("   - client_secret: (present, length=%d)", len(client_secret))
+        else:
+            logger.error("❌ NO CLIENT_SECRET - Google token endpoint will reject with 400 Bad Request")
+            logger.error("💡 SOLUTION: Set this environment variable in PowerShell BEFORE starting uvicorn:")
+            logger.error("   $env:OAUTH_CLIENT_SECRET = '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'")
+
+        try:
+            async with httpx.AsyncClient() as client:
+                response = await client.post(
+                    token_url,
+                    data=token_request_data,
+                    headers={"Content-Type": "application/x-www-form-urlencoded"},
+                    timeout=10.0,
+                )
+                response.raise_for_status()
+                token_data = response.json()
+                logger.info(
+                    "✅ Token exchange successful. Response keys: %s, has id_token: %s",
+                    list(token_data.keys()),
+                    'id_token' in token_data
+                )
+        except httpx.HTTPError as exc:
+            response_text = "No response"
+            error_code = "unknown_error"
+            error_description = "OAuth provider rejected authorization code exchange"
+            status_code = status.HTTP_401_UNAUTHORIZED
+
+            if isinstance(exc, httpx.HTTPStatusError) and exc.response is not None:
+                response_text = exc.response.text
+                status_code = exc.response.status_code
+
+                try:
+                    payload = exc.response.json()
+                except (ValueError, json.JSONDecodeError):
+                    payload = None
+
+                if isinstance(payload, dict):
+                    error_code = str(payload.get("error") or error_code)
+                    error_description = str(payload.get("error_description") or error_description)
+                elif response_text:
+                    error_description = response_text
+
+                # Log detailed error from Google
+                logger.error("❌ Google OAuth token endpoint returned %d %s", status_code, error_code)
+                logger.error("   Error description: %s", error_description)
+                if payload:
+                    logger.error("   Full response: %s", payload)
+                    
+                # Diagnose common issues
+                if error_code == "invalid_grant":
+                    logger.error("💡 invalid_grant means: Authorization code invalid/expired, or doesn't match client_id/redirect_uri")
+                    logger.error("   - Check if user took > 10 minutes before clicking login")
+                    logger.error("   - Verify redirect_uri matches exactly: %s", body.redirect_uri)
+                    logger.error("   - Verify OAuth app is configured in Google Cloud Console")
+                elif error_code == "invalid_client":
+                    logger.error("💡 invalid_client means: Client credentials (client_id/client_secret) are invalid")
+                    logger.error("   - Check OAUTH_CLIENT_SECRET environment variable is set correctly")
+                    logger.error("   - Check OIDC_CLIENT_ID environment variable is set correctly")
+                elif status_code == 400:
+                    logger.error("💡 400 Bad Request from Google likely means:")
+                    logger.error("   - Missing OAUTH_CLIENT_SECRET environment variable")
+                    logger.error("   - Redirect URI mismatch (should be exactly: http://localhost:4200/auth/callback)")
+                    logger.error("   - Authorization code has expired (valid for ~10 minutes)")
+
+                # Normalize common OAuth exchange failures for client behavior.
+                if error_code in {"invalid_grant", "invalid_request"}:
+                    status_code = status.HTTP_400_BAD_REQUEST
+                elif error_code in {"invalid_client", "unauthorized_client"}:
+                    status_code = status.HTTP_401_UNAUTHORIZED
+
+            logger.error(
+                "Failed to exchange authorization code: %s - Response: %s",
+                exc,
+                response_text,
+                extra={
+                    "event_type": "auth_failure",
+                    "reason": "code_exchange_failed",
+                    "oauth_error": error_code,
+                },
             )
-            response.raise_for_status()
-            token_data = response.json()
-            logger.info(
-                "Token exchange successful. Response keys: %s, has id_token: %s",
-                list(token_data.keys()),
-                'id_token' in token_data
+            raise HTTPException(
+                status_code=status_code,
+                detail={
+                    "message": "Failed to exchange authorization code",
+                    "oauth_error": error_code,
+                    "oauth_error_description": error_description,
+                },
+            ) from exc
+
+        id_token = token_data.get("id_token")
+        if not id_token:
+            logger.error("No id_token in Google OAuth response. Response keys: %s", list(token_data.keys()))
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid OAuth response - no id_token",
             )
-    except httpx.HTTPError as exc:
-        logger.error(
-            "Failed to exchange authorization code: %s - Response: %s",
-            exc,
-            exc.response.text if hasattr(exc, 'response') else 'No response',
-            extra={"event_type": "auth_failure", "reason": "code_exchange_failed"},
-        )
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail=f"Failed to exchange authorization code: {str(exc)}",
-        ) from exc
-    
-    id_token = token_data.get("id_token")
-    if not id_token:
-        logger.error("No id_token in Google OAuth response. Response keys: %s", list(token_data.keys()))
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid OAuth response - no id_token",
-        )
-    
-    # Log token header for debugging (doesn't expose sensitive data)
-    try:
-        import base64
-        import json
-        header = json.loads(base64.urlsafe_b64decode(id_token.split('.')[0] + '=='))
-        logger.info("id_token header: %s", header)
-    except Exception as e:
-        logger.warning("Failed to decode id_token header: %s", e)
-    
-    # Step 2: Validate the id_token
-    oidc_claims = await validate_id_token(id_token)
-    
-    # Step 3: Issue SmartHandoff application JWT
-    app_token, jti = issue_app_jwt(oidc_claims)
-    
-    # Step 4: Persist the issued jti for deprovisioning
-    try:
-        await db.execute(
-            sa_update(AppUser)
-            .where(AppUser.idp_subject == oidc_claims["sub"])
-            .values(current_jti=jti)
-        )
-        await db.commit()
+
+        # Log token header for debugging (doesn't expose sensitive data)
+        try:
+            import base64
+            import json
+            header = json.loads(base64.urlsafe_b64decode(id_token.split('.')[0] + '=='))
+            logger.info("id_token header: %s", header)
+        except Exception as e:
+            logger.warning("Failed to decode id_token header: %s", e)
+
+        # Step 2: Validate the id_token
+        oidc_claims = await validate_id_token(id_token)
+
+        # Step 3: Issue SmartHandoff application JWT
+        app_token, jti = issue_app_jwt(oidc_claims)
+
+        # Step 4: Persist the issued jti for deprovisioning
+        try:
+            await db.execute(
+                sa_update(AppUser)
+                .where(AppUser.idp_subject == oidc_claims["sub"])
+                .values(current_jti=jti)
+            )
+            await db.commit()
+        except Exception as exc:  # noqa: BLE001
+            logger.warning(
+                "Failed to persist current_jti for sub=%s: %s",
+                oidc_claims.get("sub"),
+                exc,
+                extra={"event_type": "jti_persist_failure"},
+            )
+            await db.rollback()
+
+        return TokenResponse(access_token=app_token)
+    except HTTPException:
+        raise
     except Exception as exc:  # noqa: BLE001
-        logger.warning(
-            "Failed to persist current_jti for sub=%s: %s",
-            oidc_claims.get("sub"),
-            exc,
-            extra={"event_type": "jti_persist_failure"},
-        )
-        await db.rollback()
-    
-    return TokenResponse(access_token=app_token)
+        logger.exception("Unexpected error during OAuth code exchange: %s", exc)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"OAuth code exchange failed unexpectedly ({type(exc).__name__})",
+        ) from exc

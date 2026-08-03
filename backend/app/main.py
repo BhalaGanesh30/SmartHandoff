@@ -128,7 +128,9 @@ app = FastAPI(
 # FastAPI applies middleware in reverse — last added = outermost = first to run.
 settings = get_settings()
 logger = logging.getLogger(__name__)
-logger.info("Configuring CORS middleware with origins: %s", settings.CORS_ORIGINS)
+import sys
+print(f"🔧 CORS Configuration: {settings.CORS_ORIGINS}", file=sys.stderr, flush=True)
+logger.warning("🔧 Configuring CORS middleware with origins: %s", settings.CORS_ORIGINS)
 
 # HIPAA audit logging middleware — must be registered after JWT validation
 # middleware so request.state.user_id is populated when this middleware runs.

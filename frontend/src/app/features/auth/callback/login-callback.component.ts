@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
+import { HttpErrorResponse } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
 import { AuthService } from '../../../core/auth/auth.service';
 import { environment } from '../../../../environments/environment';
@@ -54,7 +55,24 @@ export class LoginCallbackComponent implements OnInit {
     try {
       await this.#handleCallback();
     } catch (err) {
-      console.error('OIDC callback error:', err);
+      if (err instanceof HttpErrorResponse) {
+        const backendDetail = err.error?.detail || err.error?.message || JSON.stringify(err.error);
+        console.error('❌ OIDC callback exchange failed', {
+          status: err.status,
+          statusText: err.statusText,
+          detail: backendDetail,
+          rawError: err.error,
+        });
+        
+        // Log more details about the error
+        if (err.status === 400) {
+          console.error('💡 400 Bad Request likely means: Invalid authorization code, expired code, or mismatched redirect_uri');
+        } else if (err.status === 401) {
+          console.error('💡 401 Unauthorized: Client authentication failed or authorization code is invalid');
+        }
+      } else {
+        console.error('❌ OIDC callback error:', err);
+      }
       this.error = true;
       // Clean up PKCE artefacts on failure
       sessionStorage.removeItem('pkce_code_verifier');
@@ -97,22 +115,39 @@ export class LoginCallbackComponent implements OnInit {
       redirect_uri: `${window.location.origin}/auth/callback`,
     };
 
-    const tokenResponse = await firstValueFrom(
-      this.http.post<{ access_token: string; token_type: string; expires_in: number }>(
-        `${environment.apiBaseUrl}/api/v1/auth/exchange-code`,
-        codeExchangeBody,
-      )
-    );
+    // Ensure proper JSON encoding and headers
+    console.log('📤 Sending code exchange request with body:', {
+      code: codeExchangeBody.code.substring(0, 20) + '...',
+      code_verifier: codeExchangeBody.code_verifier.substring(0, 20) + '...',
+      redirect_uri: codeExchangeBody.redirect_uri,
+    });
 
-    // Store the SmartHandoff application JWT
-    this.authService.setToken(tokenResponse.access_token);
+    try {
+      const tokenResponse = await firstValueFrom(
+        this.http.post<{ access_token: string; token_type: string; expires_in: number }>(
+          `${environment.apiBaseUrl}/api/v1/auth/exchange-code`,
+          codeExchangeBody,
+          { 
+            headers: { 'Content-Type': 'application/json' },
+            withCredentials: true,
+          }
+        )
+      );
 
-    // Clean up PKCE artefacts — they are single-use only
-    sessionStorage.removeItem('pkce_code_verifier');
-    sessionStorage.removeItem('oidc_state');
+      console.log('✅ Code exchange successful. Token received.');
 
-    // Navigate to dashboard or the originally requested URL
-    const returnUrl = this.route.snapshot.queryParams['returnUrl'] ?? '/dashboard';
-    await this.router.navigateByUrl(returnUrl);
+      // Store the SmartHandoff application JWT
+      this.authService.setToken(tokenResponse.access_token);
+
+      // Clean up PKCE artefacts — they are single-use only
+      sessionStorage.removeItem('pkce_code_verifier');
+      sessionStorage.removeItem('oidc_state');
+
+      // Navigate to dashboard or the originally requested URL
+      const returnUrl = this.route.snapshot.queryParams['returnUrl'] ?? '/dashboard';
+      await this.router.navigateByUrl(returnUrl);
+    } catch (err) {
+      throw err; // Re-throw to be handled by ngOnInit error handler
+    }
   }
 }
