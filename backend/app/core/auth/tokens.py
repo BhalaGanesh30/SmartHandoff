@@ -28,7 +28,11 @@ logger = logging.getLogger(__name__)
 
 def _oidc_client_id() -> str:
     """Return OIDC_CLIENT_ID from environment."""
-    client_id = os.environ.get("OIDC_CLIENT_ID", "")
+    client_id = (
+        os.environ.get("OIDC_CLIENT_ID")
+        or os.environ.get("GOOGLE_OAUTH_CLIENT_ID")
+        or "52528248131-kdk6um989bnrr80v61890b3kpeqqm5nt.apps.googleusercontent.com"
+    )
     if not client_id:
         raise RuntimeError(
             "OIDC_CLIENT_ID environment variable is not set."

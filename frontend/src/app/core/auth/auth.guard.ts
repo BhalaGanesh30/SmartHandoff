@@ -1,5 +1,5 @@
-import { inject } from '@angular/core';
-import { CanActivateFn, Router } from '@angular/router';
+import { Injectable } from '@angular/core';
+import { ActivatedRouteSnapshot, CanActivate, Router, RouterStateSnapshot, UrlTree } from '@angular/router';
 import { AuthService } from './auth.service';
 import { environment } from '../../../environments/environment';
 
@@ -19,22 +19,28 @@ import { environment } from '../../../environments/environment';
  *       .then(m => m.DashboardComponent),
  *   }
  */
-export const authGuard: CanActivateFn = () => {
-  const authService = inject(AuthService);
-  const router = inject(Router);
+@Injectable({ providedIn: 'root' })
+export class AuthGuard implements CanActivate {
+  constructor(
+    private readonly authService: AuthService,
+    private readonly router: Router,
+  ) {}
 
-  // DEV MODE: Skip authentication if SKIP_AUTH is enabled
-  if ((environment as any).SKIP_AUTH === true) {
-    console.warn('⚠️  AUTH GUARD BYPASSED - Development mode only!');
-    return true;
+  canActivate(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): boolean | UrlTree {
+    // DEV MODE: Skip authentication if SKIP_AUTH is enabled
+    if ((environment as any).SKIP_AUTH === true) {
+      console.warn('⚠️  AUTH GUARD BYPASSED - Development mode only!');
+      return true;
+    }
+
+    if (this.authService.isAuthenticated()) {
+      return true;
+    }
+
+    // Redirect to login; preserve attempted URL for post-login redirect
+    const returnUrl = state.url || '/';
+    return this.router.createUrlTree(['/login'], {
+      queryParams: { returnUrl },
+    });
   }
-
-  if (authService.isAuthenticated()) {
-    return true;
-  }
-
-  // Redirect to login; preserve the attempted URL for post-login redirect
-  return router.createUrlTree(['/login'], {
-    queryParams: { returnUrl: router.getCurrentNavigation()?.extractedUrl.toString() },
-  });
-};
+}
