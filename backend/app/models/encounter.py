@@ -178,7 +178,8 @@ class Encounter(Base, TimestampMixin, SoftDeleteMixin):
 
     __table_args__ = (
         # DR-004: Composite indexes for dashboard query performance
-        sa.Index("ix_encounter_patient_admit", "patient_id", "admit_date"),
+        # ix_encounter_patient_admit removed - admit_date will be added via Alembic migration
+        # sa.Index("ix_encounter_patient_admit", "patient_id", "admit_date"),
         sa.Index("ix_encounter_unit_status", "unit", "status"),
         sa.Index("ix_encounter_risk_tier_status", "risk_tier", "status"),
         # Note: ix_encounter_deleted_at is already created by SoftDeleteMixin (index=True)
