@@ -24,8 +24,8 @@ from app.api.v1.routers.auth_patient_verify import router as patient_verify_rout
 from app.api.v1.routers.portal import router as portal_router
 from app.api.v1.routers.portal_preferences import router as portal_preferences_router
 from app.api.v1.routers.patients import router as patients_router
-from app.api.v1.routers.test_sync import router as test_sync_router
-from app.api.v1.routers.debug_schema import router as debug_schema_router
+# from app.api.v1.routers.test_sync import router as test_sync_router  # REMOVED - file does not exist
+# from app.api.v1.routers.debug_schema import router as debug_schema_router  # REMOVED - file does not exist
 from app.api.v1.routers.encounters import router as encounters_router
 from app.api.v1.routers.encounter_tasks import router as encounter_tasks_router
 from app.api.v1.routers.documents import router as documents_router
@@ -48,9 +48,9 @@ from app.core.auth.rbac_validator import validate_rbac_config
 from app.core.config import get_settings
 from app.signalr.broadcaster import SignalRBroadcaster
 from app.db.encryption_key import get_phi_encryption_key
-from app.db.session import create_db_engines, dispose_db_engines, run_db_migrations, get_write_session
-from app.db.ensure_schema import ensure_schema
-from app.db.add_missing_encounter_columns import add_missing_encounter_columns
+from app.db.session import create_db_engines, dispose_db_engines, get_write_session
+# from app.db.ensure_schema import ensure_schema  # REMOVED - file does not exist
+# from app.db.add_missing_encounter_columns import add_missing_encounter_columns  # REMOVED - file does not exist
 from app.middleware.audit import HIPAAAuditMiddleware
 from app.middleware.phi_log_sanitiser import PhiLogSanitiserMiddleware
 
@@ -87,24 +87,24 @@ async def lifespan(app: FastAPI):
         logger.warning("✓ Database engines initialized successfully")
         
         # 3.1 Run Alembic migrations to add missing columns
-        logger.warning("🔧 Startup Step 3.1/4: Running Alembic migrations...")
-        try:
-            run_db_migrations()
-            logger.warning("✓ Alembic migrations completed successfully")
-        except Exception as exc:
-            logger.warning(f"⚠️  Alembic migrations failed (continuing): {exc}")
+        logger.warning("🔧 Startup Step 3.1/4: Skipping Alembic migrations (no function available)...")
+        # try:
+        #     run_db_migrations()
+        #     logger.warning("✓ Alembic migrations completed successfully")
+        # except Exception as exc:
+        #     logger.warning(f"⚠️  Alembic migrations failed (continuing): {exc}")
         
         # 3.5 Ensure database schema has required columns
-        logger.warning("🔧 Startup Step 3.5/4: Ensuring database schema...")
-        try:
-            # Schema verification (add_missing_encounter_columns is now handled by Alembic)
-            settings = get_settings()
-            
-            async with get_write_session() as db:
-                await ensure_schema(db)
-            logger.warning("✓ Schema verification completed")
-        except Exception as exc:
-            logger.warning(f"⚠️  Schema verification failed (continuing): {exc}")
+        logger.warning("🔧 Startup Step 3.5/4: Skipping schema verification (functions removed)...")
+        # try:
+        #     # Schema verification (add_missing_encounter_columns is now handled by Alembic)
+        #     settings = get_settings()
+        #     
+        #     async with get_write_session() as db:
+        #         await ensure_schema(db)
+        #     logger.warning("✓ Schema verification completed")
+        # except Exception as exc:
+        #     logger.warning(f"⚠️  Schema verification failed (continuing): {exc}")
         
         # 4. Initialize SignalR broadcaster (US-022) - optional
         settings = get_settings()
@@ -199,8 +199,8 @@ app.include_router(patient_verify_router, prefix="/api/v1")
 app.include_router(portal_router, prefix="/api/v1")
 app.include_router(portal_preferences_router, prefix="/api/v1")
 app.include_router(patients_router, prefix="/api/v1")
-app.include_router(test_sync_router, prefix="/api/v1")
-app.include_router(debug_schema_router)  # DEBUG ONLY - adds /debug/fix-schema endpoint
+# app.include_router(test_sync_router, prefix="/api/v1")  # REMOVED - file does not exist
+# app.include_router(debug_schema_router)  # REMOVED - file does not exist
 app.include_router(encounters_router, prefix="/api/v1")
 app.include_router(encounter_tasks_router, prefix="/api/v1")
 app.include_router(documents_router, prefix="/api/v1")
