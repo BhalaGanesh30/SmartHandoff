@@ -16,7 +16,10 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.analytics.models import KpiDailyView
-from app.analytics.schemas import KpiDataPoint, KpiResponse
+from app.analytics.schemas import KpiDataPoint, KpiResponse, RiskDistributionBucket, RiskDistributionResponse
+from app.models.encounter import Encounter
+from app.models.patient import Patient
+from sqlalchemy import func
 
 
 class KpiQueryService:
@@ -51,9 +54,11 @@ class KpiQueryService:
             select(KpiDailyView)
             .where(KpiDailyView.date >= from_date)
             .where(KpiDailyView.date <= to_date)
-            .where(KpiDailyView.unit.in_(accessible_units))
             .order_by(KpiDailyView.date.asc(), KpiDailyView.unit.asc())
         )
+
+        if accessible_units:
+            stmt = stmt.where(KpiDailyView.unit.in_(accessible_units))
 
         if unit is not None:
             stmt = stmt.where(KpiDailyView.unit == unit)
@@ -70,3 +75,73 @@ class KpiQueryService:
             data=data_points,
             total_rows=len(data_points),
         )
+
+    async def get_risk_distribution(
+        self,
+        from_date: datetime.date,
+        to_date: datetime.date,
+        unit: str | None,
+        accessible_units: list[str],
+    ) -> RiskDistributionResponse:
+        """Return risk tier distribution for discharged encounters."""
+        stmt = (
+            select(Encounter.risk_tier, func.count(Encounter.id).label("count"))
+            .where(Encounter.deleted_at.is_(None))
+            .where(Encounter.status == "DISCHARGED")
+            .where(Encounter.discharge_date >= datetime.datetime.combine(from_date, datetime.datetime.min.time()))
+            .where(Encounter.discharge_date < datetime.datetime.combine(to_date + datetime.timedelta(days=1), datetime.datetime.min.time()))
+            .group_by(Encounter.risk_tier)
+        )
+        if accessible_units:
+            stmt = stmt.where(Encounter.unit.in_(accessible_units))
+        if unit is not None:
+            stmt = stmt.where(Encounter.unit == unit)
+
+        result = await self._session.execute(stmt)
+        rows = result.all()
+        total = sum(r.count for r in rows)
+        order = {"LOW": 0, "MEDIUM": 1, "HIGH": 2, "UNKNOWN": 3}
+        buckets = [
+            RiskDistributionBucket(
+                tier=row.risk_tier,
+                count=row.count,
+                percentage=round((row.count / total * 100) if total > 0 else 0.0, 1),
+            )
+            for row in sorted(rows, key=lambda r: order.get(r.risk_tier, 99))
+        ]
+        return RiskDistributionResponse(
+            from_date=from_date,
+            to_date=to_date,
+            unit=unit,
+            buckets=buckets,
+            total=total,
+        )
+
+    async def get_high_risk_encounters(
+        self,
+        from_date: datetime.date,
+        to_date: datetime.date,
+        unit: str | None,
+        accessible_units: list[str],
+        limit: int,
+    ) -> list:
+        """Return top high-risk discharged encounters (raw rows)."""
+        stmt = (
+            select(Encounter, Patient.mrn_encrypted)
+            .join(Patient, Encounter.patient_id == Patient.id)
+            .where(Encounter.deleted_at.is_(None))
+            .where(Patient.deleted_at.is_(None))
+            .where(Encounter.status == "DISCHARGED")
+            .where(Encounter.discharge_date >= datetime.datetime.combine(from_date, datetime.datetime.min.time()))
+            .where(Encounter.discharge_date < datetime.datetime.combine(to_date + datetime.timedelta(days=1), datetime.datetime.min.time()))
+            .where(Encounter.risk_tier == "HIGH")
+            .order_by(Encounter.risk_score.desc().nullslast())
+            .limit(limit)
+        )
+        if accessible_units:
+            stmt = stmt.where(Encounter.unit.in_(accessible_units))
+        if unit is not None:
+            stmt = stmt.where(Encounter.unit == unit)
+
+        result = await self._session.execute(stmt)
+        return result.all()

@@ -26,6 +26,21 @@ export function toSingleSeriesData(
   });
 }
 
+/** Aggregate discharge_volume by date across all units. */
+export function aggregateDischargeVolumeByDate(data: KpiDataPoint[]): { labels: string[]; values: number[] } {
+  const map = new Map<string, number>();
+  for (const d of data) {
+    if (d.discharge_volume === null) continue;
+    const current = map.get(d.date) ?? 0;
+    map.set(d.date, current + d.discharge_volume);
+  }
+  const sorted = Array.from(map.entries()).sort((a, b) => new Date(a[0]).getTime() - new Date(b[0]).getTime());
+  return {
+    labels: sorted.map(([date]) => new Date(date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })),
+    values: sorted.map(([, v]) => v),
+  };
+}
+
 /** Build stacked bar datasets for agent success rate (success vs failure). */
 export function toAgentSuccessDatasets(data: KpiDataPoint[]): ChartDataset<'bar'>[] {
   const successRates = data.map((d) =>

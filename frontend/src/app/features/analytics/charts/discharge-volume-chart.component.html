@@ -1,0 +1,29 @@
+<h3>Discharge Volume — Last 30 Days</h3>
+@if (points.length > 0) {
+  <div class="line-chart" role="img" [attr.aria-label]="'Discharge volume line chart with ' + points.length + ' data points'">
+    <svg viewBox="0 0 400 120" preserveAspectRatio="none">
+      <!-- Grid lines -->
+      <line x1="0" y1="30" x2="400" y2="30" stroke="#E5E7EB" stroke-width="1" />
+      <line x1="0" y1="60" x2="400" y2="60" stroke="#E5E7EB" stroke-width="1" />
+      <line x1="0" y1="90" x2="400" y2="90" stroke="#E5E7EB" stroke-width="1" />
+
+      <!-- Area fill -->
+      <polygon [attr.points]="areaPoints" fill="rgba(37,99,235,0.08)" />
+
+      <!-- Trend line -->
+      <polyline [attr.points]="polylinePoints" fill="none" stroke="#2563EB" stroke-width="2.5" />
+
+      <!-- Data points -->
+      @for (p of points; track $index) {
+        <circle [attr.cx]="$index * (400 / (points.length - 1 || 1))" [attr.cy]="p.y" [attr.r]="$index === points.length - 1 ? 4 : 3" fill="#2563EB" [attr.opacity]="$index === points.length - 1 ? 1 : 0.6" />
+      }
+    </svg>
+  </div>
+  <div class="line-chart-labels">
+    @for (lp of labelPositions; track lp.label) {
+      <span [style.left.%]="(lp.x / 400) * 100">{{ lp.label }}</span>
+    }
+  </div>
+} @else {
+  <p class="no-data" role="status">No discharge volume data available for this period.</p>
+}

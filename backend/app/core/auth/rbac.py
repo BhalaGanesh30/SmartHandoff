@@ -146,9 +146,11 @@ def require_permission(resource: str, action: str) -> Callable:
         current_user: TokenClaims = Depends(get_current_user),
     ) -> TokenClaims:
         role: str = current_user.role
+        # Normalize role for matrix lookup (matrix keys are uppercase, e.g. ADMIN)
+        normalized_role = role.upper()
 
         # Hardcoded PATIENT boundary — PATIENT-role JWTs never pass staff endpoints
-        if role == _PATIENT_ROLE:
+        if normalized_role == _PATIENT_ROLE:
             await write_rbac_audit_entry(
                 user_id=current_user.sub,
                 role=role,
@@ -162,7 +164,7 @@ def require_permission(resource: str, action: str) -> Callable:
             )
 
         matrix = load_rbac_matrix()
-        role_permissions = matrix.get(role, {})
+        role_permissions = matrix.get(normalized_role, {})
         allowed_actions: list[str] = role_permissions.get(resource, [])
 
         if action not in allowed_actions:

@@ -11,12 +11,18 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 
-import { KpiFilterParams, KpiResponse } from './analytics.models';
+import { environment } from '../../../environments/environment';
+import {
+  HighRiskEncountersResponse,
+  KpiFilterParams,
+  KpiResponse,
+  RiskDistributionResponse,
+} from './analytics.models';
 
 @Injectable({ providedIn: 'root' })
 export class AnalyticsApiService {
   private readonly http = inject(HttpClient);
-  private readonly baseUrl = '/api/v1/analytics';
+  private readonly baseUrl = `${environment.apiBaseUrl}/api/v1/analytics`;
 
   /**
    * Fetch KPI data for the given filter parameters.
@@ -24,15 +30,24 @@ export class AnalyticsApiService {
    * The JWT is attached automatically by the JwtInterceptor (core/auth).
    */
   getKpis(filters: KpiFilterParams): Observable<KpiResponse> {
-    let params = new HttpParams()
-      .set('from', filters.from)
-      .set('to', filters.to);
-
-    if (filters.unit) {
-      params = params.set('unit', filters.unit);
-    }
-
+    const params = this._buildParams(filters);
     return this.http.get<KpiResponse>(`${this.baseUrl}/kpis`, { params });
+  }
+
+  /**
+   * Fetch readmission risk tier distribution for the donut chart.
+   */
+  getRiskDistribution(filters: KpiFilterParams): Observable<RiskDistributionResponse> {
+    const params = this._buildParams(filters);
+    return this.http.get<RiskDistributionResponse>(`${this.baseUrl}/risk-distribution`, { params });
+  }
+
+  /**
+   * Fetch top high-risk discharged encounters for the table.
+   */
+  getHighRiskEncounters(filters: KpiFilterParams, limit = 10): Observable<HighRiskEncountersResponse> {
+    const params = this._buildParams(filters).set('limit', limit.toString());
+    return this.http.get<HighRiskEncountersResponse>(`${this.baseUrl}/high-risk-encounters`, { params });
   }
 
   /**
@@ -48,5 +63,17 @@ export class AnalyticsApiService {
       from: from.toISOString().split('T')[0],
       to: today.toISOString().split('T')[0],
     };
+  }
+
+  private _buildParams(filters: KpiFilterParams): HttpParams {
+    let params = new HttpParams()
+      .set('from', filters.from)
+      .set('to', filters.to);
+
+    if (filters.unit) {
+      params = params.set('unit', filters.unit);
+    }
+
+    return params;
   }
 }

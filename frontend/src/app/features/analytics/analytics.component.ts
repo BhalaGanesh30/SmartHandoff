@@ -17,21 +17,31 @@
  *   US-056 TASK-005 — AuthService in-memory JWT storage
  *   US-063 — Export CSV/PDF from analytics dashboard
  */
-import { AsyncPipe, NgIf } from '@angular/common';
+import { AsyncPipe, NgIf, NgFor, DecimalPipe } from '@angular/common';
 import { Component, OnInit, inject } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { Observable, switchMap } from 'rxjs';
+import { Observable, map, switchMap } from 'rxjs';
 
 import { AuthService } from '@core/auth/auth.service';
 import { AnalyticsApiService } from './analytics-api.service';
 import { AnalyticsExportService } from './services/analytics-export.service';
 import { AnalyticsFilterBarComponent } from './filter-bar/analytics-filter-bar.component';
-import { AgentSuccessRateChartComponent } from './charts/agent-success-rate-chart.component';
-import { BedUtilisationChartComponent } from './charts/bed-utilisation-chart.component';
-import { DischargeTimeChartComponent } from './charts/discharge-time-chart.component';
-import { MedReconRateChartComponent } from './charts/med-recon-rate-chart.component';
-import { ReadmissionRateChartComponent } from './charts/readmission-rate-chart.component';
-import { KpiFilterParams, KpiResponse } from './analytics.models';
+import { DischargeVolumeChartComponent } from './charts/discharge-volume-chart.component';
+import { RiskDistributionChartComponent } from './charts/risk-distribution-chart.component';
+import { HighRiskTableComponent } from './high-risk-table/high-risk-table.component';
+import {
+  KpiFilterParams,
+  KpiResponse,
+  RiskDistributionResponse,
+  HighRiskEncountersResponse,
+} from './analytics.models';
+
+export interface KpiTileData {
+  label: string;
+  value: string;
+  trend: string;
+  trendClass: string;
+}
 
 @Component({
   selector: 'app-analytics',
@@ -39,12 +49,12 @@ import { KpiFilterParams, KpiResponse } from './analytics.models';
   imports: [
     AsyncPipe,
     NgIf,
+    NgFor,
+    DecimalPipe,
     AnalyticsFilterBarComponent,
-    DischargeTimeChartComponent,
-    ReadmissionRateChartComponent,
-    MedReconRateChartComponent,
-    BedUtilisationChartComponent,
-    AgentSuccessRateChartComponent,
+    DischargeVolumeChartComponent,
+    RiskDistributionChartComponent,
+    HighRiskTableComponent,
   ],
   templateUrl: './analytics.component.html',
   styleUrl: './analytics.component.scss',
@@ -57,6 +67,9 @@ export class AnalyticsComponent implements OnInit {
   private readonly router = inject(Router);
 
   kpiData$!: Observable<KpiResponse>;
+  kpiTiles$!: Observable<KpiTileData[]>;
+  riskDistribution$!: Observable<RiskDistributionResponse>;
+  highRiskEncounters$!: Observable<HighRiskEncountersResponse>;
   initialFilters!: KpiFilterParams;
   availableUnits: string[] = [];
 
@@ -74,26 +87,104 @@ export class AnalyticsComponent implements OnInit {
     };
 
     // Populate available units from the current user's JWT claims (manager's accessible units).
-    // This satisfies US-061 DoD: "Unit filter dropdown populated from app_user.units"
-    // AuthService.currentUser() is a computed signal from the decoded JWT payload.
     this.availableUnits = this.authService.currentUser()?.units ?? [];
 
-    // Derive KPI data observable from URL query params
-    this.kpiData$ = this.route.queryParams.pipe(
-      switchMap((params) => {
-        const filters: KpiFilterParams = {
-          from: params['from'] ?? defaults.from,
-          to: params['to'] ?? defaults.to,
-          unit: params['unit'] ?? undefined,
-        };
-        return this.apiService.getKpis(filters);
-      }),
+    const filters$ = this.route.queryParams.pipe(
+      map((params) => ({
+        from: params['from'] ?? defaults.from,
+        to: params['to'] ?? defaults.to,
+        unit: params['unit'] ?? undefined,
+      })),
     );
+
+    this.kpiData$ = filters$.pipe(switchMap((filters) => this.apiService.getKpis(filters)));
+    this.riskDistribution$ = filters$.pipe(
+      switchMap((filters) => this.apiService.getRiskDistribution(filters)),
+    );
+    this.highRiskEncounters$ = filters$.pipe(
+      switchMap((filters) => this.apiService.getHighRiskEncounters(filters, 10)),
+    );
+
+    this.kpiTiles$ = this.kpiData$.pipe(map((response) => this._buildTiles(response)));
+  }
+
+  private _buildTiles(response: KpiResponse): KpiTileData[] {
+    const data = response.data ?? [];
+    const sorted = [...data].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+    const half = Math.floor(sorted.length / 2);
+    const prev = sorted.slice(0, half);
+    const curr = sorted.slice(half);
+
+    const avg = (arr: typeof data, field: keyof typeof data[0]): number | null => {
+      const values = arr
+        .map((d) => d[field])
+        .filter((v): v is number => typeof v === 'number' && !Number.isNaN(v));
+      return values.length ? values.reduce((a, b) => a + b, 0) / values.length : null;
+    };
+
+    const trend = (currAvg: number | null, prevAvg: number | null, lowerIsBetter = false): KpiTileData['trend'] => {
+      if (currAvg === null || prevAvg === null || prevAvg === 0) {
+        return '— No change vs prev period';
+      }
+      const delta = currAvg - prevAvg;
+      const sign = delta >= 0 ? '↑' : '↓';
+      const isGood = lowerIsBetter ? delta < 0 : delta > 0;
+      return `${sign} ${Math.abs(delta).toFixed(1)} vs prev period${isGood ? '  ✓ Improving' : ''}`;
+    };
+
+    const trendClass = (delta: number | null, lowerIsBetter = false): string => {
+      if (delta === null) return 'neutral';
+      const isGood = lowerIsBetter ? delta < 0 : delta > 0;
+      return isGood ? 'up-good' : 'up-bad';
+    };
+
+    const dischargeMin = avg(curr, 'avg_discharge_doc_time_min');
+    const prevDischarge = avg(prev, 'avg_discharge_doc_time_min');
+    const dischargeDelta = dischargeMin !== null && prevDischarge !== null ? dischargeMin - prevDischarge : null;
+
+    const readmitRate = avg(curr, 'readmission_rate_30d');
+    const prevReadmit = avg(prev, 'readmission_rate_30d');
+    const readmitDelta = readmitRate !== null && prevReadmit !== null ? readmitRate - prevReadmit : null;
+
+    const medRecon = avg(curr, 'med_recon_completion_rate');
+    const prevMedRecon = avg(prev, 'med_recon_completion_rate');
+    const medReconDelta = medRecon !== null && prevMedRecon !== null ? medRecon - prevMedRecon : null;
+
+    const bedUtil = avg(curr, 'bed_utilisation_pct');
+    const prevBedUtil = avg(prev, 'bed_utilisation_pct');
+    const bedUtilDelta = bedUtil !== null && prevBedUtil !== null ? bedUtil - prevBedUtil : null;
+
+    return [
+      {
+        label: 'Avg Discharge Time',
+        value: dischargeMin !== null ? `${dischargeMin.toFixed(1)}h` : '—',
+        trend: trend(dischargeMin, prevDischarge, true),
+        trendClass: trendClass(dischargeDelta, true),
+      },
+      {
+        label: '30-Day Readmission Rate',
+        value: readmitRate !== null ? `${(readmitRate * 100).toFixed(1)}%` : '—',
+        trend: trend(readmitRate, prevReadmit, true),
+        trendClass: trendClass(readmitDelta, true),
+      },
+      {
+        label: 'Med Recon Completion',
+        value: medRecon !== null ? `${(medRecon * 100).toFixed(1)}%` : '—',
+        trend: trend(medRecon, prevMedRecon),
+        trendClass: trendClass(medReconDelta),
+      },
+      {
+        label: 'Bed Utilisation',
+        value: bedUtil !== null ? `${Math.round(bedUtil)}%` : '—',
+        trend: trend(bedUtil, prevBedUtil),
+        trendClass: trendClass(bedUtilDelta),
+      },
+    ];
   }
 
   /**
-   * Called by the filter bar (TASK-004) when the manager changes the date range or unit.
-   * Updates URL query params, which triggers kpiData$ re-fetch via route.queryParams.
+   * Called by the filter bar when the manager changes the date range or unit.
+   * Updates URL query params, which triggers all data streams to re-fetch.
    */
   onFilterChange(filters: KpiFilterParams): void {
     this.router.navigate([], {

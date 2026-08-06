@@ -71,10 +71,12 @@ export class AnalyticsExportService {
       .set('from', fromDate)
       .set('to', toDate);
 
+    const filename = `kpi_report_${fromDate}_${toDate}.pdf`;
+
     return this.http
       .get<ExportJobStatus>(this.baseUrl, { params })
       .pipe(
-        switchMap((job) => this._pollUntilComplete(job.poll_url ?? '')),
+        switchMap((job) => this._pollUntilComplete(job.poll_url ?? '', filename)),
         timeout({
           each: 120_000,
           with: () => throwError(() => new Error('PDF export timed out after 120 seconds.')),
@@ -82,7 +84,10 @@ export class AnalyticsExportService {
       );
   }
 
-  private _pollUntilComplete(pollUrl: string): Observable<string> {
+  private _pollUntilComplete(
+    pollUrl: string,
+    filename: string,
+  ): Observable<string> {
     return interval(3_000).pipe(
       switchMap(() =>
         this.http.get<ExportJobStatus>(`${environment.apiBaseUrl}${pollUrl}`)
@@ -90,7 +95,7 @@ export class AnalyticsExportService {
       filter((status) => status.status === 'complete' && !!status.download_url),
       take(1),
       switchMap((status) => {
-        this._triggerUrlDownload(status.download_url!);
+        this._triggerUrlDownload(status.download_url!, filename);
         return [status.download_url!];
       }),
     );
@@ -104,14 +109,36 @@ export class AnalyticsExportService {
 
   private _triggerBlobDownload(blob: Blob, filename: string): void {
     const url = URL.createObjectURL(blob);
-    this._triggerUrlDownload(url, filename);
+    const anchor = document.createElement('a');
+    anchor.href = url;
+    anchor.download = filename;
+    anchor.click();
     URL.revokeObjectURL(url);
   }
 
-  private _triggerUrlDownload(url: string, filename?: string): void {
+  private _triggerUrlDownload(url: string, filename: string): void {
+    if (url.startsWith('data:')) {
+      const blob = this._dataUrlToBlob(url);
+      this._triggerBlobDownload(blob, filename);
+      return;
+    }
+
     const anchor = document.createElement('a');
     anchor.href = url;
-    if (filename) anchor.download = filename;
+    anchor.download = filename;
     anchor.click();
+  }
+
+  private _dataUrlToBlob(dataUrl: string): Blob {
+    const [meta, base64] = dataUrl.split(',');
+    const byteString = window.atob(base64);
+    const mimeMatch = /data:([^;]+)/.exec(meta);
+    const mimeType = mimeMatch?.[1] ?? 'application/octet-stream';
+    const ab = new ArrayBuffer(byteString.length);
+    const ia = new Uint8Array(ab);
+    for (let i = 0; i < byteString.length; i++) {
+      ia[i] = byteString.charCodeAt(i);
+    }
+    return new Blob([ab], { type: mimeType });
   }
 }

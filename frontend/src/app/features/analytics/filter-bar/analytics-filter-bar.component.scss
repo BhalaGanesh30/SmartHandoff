@@ -1,18 +1,37 @@
-// Filter bar layout — horizontal flex, responsive wrap for narrow viewports
 .filter-bar {
   display: flex;
+  align-items: center;
+  gap: 10px;
   flex-wrap: wrap;
-  gap: 1rem;
-  align-items: flex-start;
-  padding: 1rem 0;
 }
 
-.date-range-field {
-  min-width: 280px;
-  flex: 1 1 280px;
+.filter-select {
+  padding: 8px 14px;
+  background: #fff;
+  border: 1.5px solid #E5E7EB;
+  border-radius: 8px;
+  font-size: 13px;
+  cursor: pointer;
+  color: #111827;
+  min-width: 140px;
+
+  &:focus {
+    outline: 2px solid #2563EB;
+    outline-offset: 1px;
+  }
 }
 
-.unit-field {
-  min-width: 180px;
-  flex: 0 1 180px;
+.custom-date-range {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  input[type="date"] {
+    padding: 8px 10px;
+    background: #fff;
+    border: 1.5px solid #E5E7EB;
+    border-radius: 8px;
+    font-size: 13px;
+    color: #111827;
+  }
 }

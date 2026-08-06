@@ -1,0 +1,6 @@
+role_mapping:
+  ADMIN: admin
+  MANAGER: manager
+  CLINICAL_STAFF: clinical_staff
+  ADMINISTRATIVE_STAFF: administrative_staff
+  PATIENT: patient

@@ -1,0 +1,31 @@
+<h3>Readmission Risk Distribution</h3>
+@if (hasData) {
+  <div class="donut-wrap">
+    <svg class="donut-svg" viewBox="0 0 36 36" role="img" aria-label="Readmission risk distribution doughnut chart">
+      <circle r="15.9" cx="18" cy="18" fill="transparent" stroke="#F0FDF4" stroke-width="3.8" stroke-dasharray="100 0" transform="rotate(-90 18 18)" />
+      @for (segment of segments; track segment.tier) {
+        <circle
+          r="15.9"
+          cx="18"
+          cy="18"
+          fill="transparent"
+          [attr.stroke]="segment.color"
+          stroke-width="3.8"
+          [attr.stroke-dasharray]="segment.dasharray"
+          [attr.transform]="segment.transform"
+        />
+      }
+      <text x="18" y="18" text-anchor="middle" dy=".3em" font-size="6" font-weight="700" fill="#111827">Risk</text>
+    </svg>
+    <div class="donut-legend">
+      @for (bucket of buckets; track bucket.tier) {
+        <div class="donut-item">
+          <div class="donut-dot" [style.background]="colorFor(bucket.tier)"></div>
+          <span>{{ labelFor(bucket.tier) }}: <strong>{{ bucket.percentage }}%</strong></span>
+        </div>
+      }
+    </div>
+  </div>
+} @else {
+  <p class="no-data" role="status">No risk distribution data available.</p>
+}

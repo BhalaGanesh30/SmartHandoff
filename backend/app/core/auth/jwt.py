@@ -81,9 +81,20 @@ def _jwt_signing_key() -> str:
 
 # ── Claims mapping helpers ─────────────────────────────────────────────────────
 
-_ROLE_MAP: dict[str, str] = {
-    # Map IdP group names to SmartHandoff role strings.
-    # Keys must match the group names configured in the hospital IdP.
+# EMAIL-BASED ROLE MAPPING (for Gmail/Google OAuth testing)
+# Add your Gmail addresses here and assign roles directly
+_EMAIL_ROLE_MAP: dict[str, str] = {
+    # Format: "email@gmail.com" → "role_name"
+    "balaganesh272@gmail.com":      "admin",
+    # "nurse@hospital.com":           "nurse",
+    # "doctor@hospital.com":          "physician",
+    # "pharmacist@hospital.com":      "pharmacist",
+}
+
+# GROUP-BASED ROLE MAPPING (for Google Groups)
+# Map IdP group names to SmartHandoff role strings.
+# Keys must match the group names configured in the hospital IdP.
+_GROUP_ROLE_MAP: dict[str, str] = {
     "smarthandoff-admin":       "admin",
     "smarthandoff-physician":   "physician",
     "smarthandoff-nurse":       "nurse",
@@ -92,26 +103,55 @@ _ROLE_MAP: dict[str, str] = {
 }
 
 
-def _map_role(groups: list[str]) -> str:
-    """Map IdP groups to a SmartHandoff role string.
+def _map_role(email: str = "", groups: list[str] = None) -> str:
+    """Map email or groups to a SmartHandoff role string.
 
-    Takes the first matching group in priority order (most privileged first).
-    Returns "unknown" if no known group is found; callers should reject unknown roles.
-    
-    TEMPORARY: For testing without Google Workspace, assigns 'ADMIN' role to all users.
-    TODO: Remove this default and enforce Google Groups in production.
+    Priority order:
+    1. Check if email is in _EMAIL_ROLE_MAP (direct email mapping)
+    2. Check if any group is in _GROUP_ROLE_MAP (Google Groups)
+    3. Default to "ADMIN" for testing (remove in production)
+
+    Args:
+        email: User's email address from OIDC claims
+        groups: List of group names from OIDC claims (default [])
+
+    Returns:
+        str: Role name (admin, nurse, physician, etc.) or "ADMIN" as default
     """
-    for group in groups:
-        if group in _ROLE_MAP:
-            return _ROLE_MAP[group]
+    if groups is None:
+        groups = []
     
-    # TEMPORARY: Default to ADMIN for testing without Google Groups
+    # Step 1: Check email mapping first (highest priority)
+    if email and email in _EMAIL_ROLE_MAP:
+        role = _EMAIL_ROLE_MAP[email]
+        logger.info(
+            "✓ Role mapped by email: %s → %s",
+            email,
+            role,
+            extra={"event_type": "role_mapping", "method": "email"},
+        )
+        return role
+    
+    # Step 2: Check group mapping (fallback)
+    for group in groups:
+        if group in _GROUP_ROLE_MAP:
+            role = _GROUP_ROLE_MAP[group]
+            logger.info(
+                "✓ Role mapped by group: %s → %s",
+                group,
+                role,
+                extra={"event_type": "role_mapping", "method": "group"},
+            )
+            return role
+    
+    # Step 3: Default to ADMIN for testing (remove in production)
     logger.warning(
-        "No SmartHandoff group found in groups=%r. Assigning default 'ADMIN' role for testing.",
+        "⚠️  No role mapping found for email=%s, groups=%r. Assigning default 'ADMIN'.",
+        email,
         groups,
         extra={"event_type": "auth_warning", "reason": "default_role_assigned"},
     )
-    return "ADMIN"  # TODO: Change back to "unknown" in production
+    return "ADMIN"  # TODO: Remove this default in production
 
 
 def _map_claims(oidc_claims: dict) -> dict:
@@ -119,7 +159,8 @@ def _map_claims(oidc_claims: dict) -> dict:
 
     Mapping spec (US-056 DoD):
         sub      → user_id  (OIDC subject identifier)
-        groups   → role     (via _ROLE_MAP)
+        email    → role     (checked first against _EMAIL_ROLE_MAP)
+        groups   → role     (fallback to _GROUP_ROLE_MAP)
         units    → units    (custom claim set by IdP, default [])
         email    → email
 
@@ -130,26 +171,22 @@ def _map_claims(oidc_claims: dict) -> dict:
         dict: Application claims ready for JWT encoding.
 
     Raises:
-        HTTPException 403: If the role cannot be determined from IdP groups.
+        HTTPException 403: If the role cannot be determined (removed - now defaults to ADMIN).
     """
-    role = _map_role(oidc_claims.get("groups", []))
-    if role == "unknown":
-        logger.warning(
-            "No recognised SmartHandoff group for sub=%s groups=%r",
-            oidc_claims.get("sub"),
-            oidc_claims.get("groups"),
-            extra={"event_type": "auth_failure", "reason": "no_role"},
-        )
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="User is not assigned to a SmartHandoff role",
-        )
-
+    email = oidc_claims.get("email", "")
+    groups = oidc_claims.get("groups", [])
+    
+    # Map role using email (priority 1) or groups (priority 2)
+    role = _map_role(email=email, groups=groups)
+    
+    # Note: role will never be "unknown" due to ADMIN fallback
+    # Remove the check below if moving to strict role enforcement
+    
     return {
         "sub": oidc_claims["sub"],           # user_id
         "role": role,
         "units": oidc_claims.get("units", []),
-        "email": oidc_claims.get("email", ""),
+        "email": email,
     }
 
 

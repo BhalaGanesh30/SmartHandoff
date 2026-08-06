@@ -103,8 +103,16 @@ class Encounter(Base, TimestampMixin, SoftDeleteMixin):
     )
 
     # Admission details
-    # TEMPORARILY REMOVED - Missing in current DB schema (will be added in migration)
-    # admit_date and discharge_date removed to prevent INSERT errors
+    admit_date: Mapped[datetime | None] = mapped_column(
+        sa.DateTime(timezone=True),
+        nullable=True,
+        comment="Admission datetime (UTC)",
+    )
+    discharge_date: Mapped[datetime | None] = mapped_column(
+        sa.DateTime(timezone=True),
+        nullable=True,
+        comment="Discharge datetime (UTC)",
+    )
 
     # Clinical context  
     # TEMPORARILY REMOVED - Missing in current DB schema (will be added in migration)
@@ -127,8 +135,11 @@ class Encounter(Base, TimestampMixin, SoftDeleteMixin):
         server_default=RiskTier.UNKNOWN.value,
         comment="Readmission risk tier: HIGH / MEDIUM / LOW / UNKNOWN",
     )
-    # TEMPORARILY REMOVED - Missing in current DB schema (will be added in migration)
-    # risk_score removed to prevent INSERT errors
+    risk_score: Mapped[float | None] = mapped_column(
+        sa.Float,
+        nullable=True,
+        comment="Predicted 30-day readmission probability (0.0-1.0)",
+    )
 
     # US-036: ML-predicted discharge time (TR-007 ML Inference Service)
     # TEMPORARILY REMOVED - Missing in current DB schema (will be added in migration)

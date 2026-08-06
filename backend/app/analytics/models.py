@@ -42,3 +42,27 @@ class KpiDailyView(AnalyticsBase):
     med_recon_completion_rate: Mapped[float | None] = mapped_column(Float, nullable=True)
     bed_utilisation_pct: Mapped[float | None] = mapped_column(Float, nullable=True)
     agent_task_success_rate: Mapped[float | None] = mapped_column(Float, nullable=True)
+    discharge_volume: Mapped[int | None] = mapped_column(Float, nullable=True)
+
+
+class ExportJob:
+    """In-memory export job tracker (dev/local only)."""
+
+    _jobs: dict[str, dict] = {}
+    _counter = 0
+
+    @classmethod
+    def create(cls) -> str:
+        cls._counter += 1
+        job_id = f"export-{cls._counter}"
+        cls._jobs[job_id] = {"status": "processing", "download_url": None}
+        return job_id
+
+    @classmethod
+    def complete(cls, job_id: str, download_url: str) -> None:
+        if job_id in cls._jobs:
+            cls._jobs[job_id] = {"status": "complete", "download_url": download_url}
+
+    @classmethod
+    def get(cls, job_id: str) -> dict | None:
+        return cls._jobs.get(job_id)

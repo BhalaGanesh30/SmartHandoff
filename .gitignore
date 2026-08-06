@@ -47,6 +47,17 @@ yarn-error.log*
 .env.test.local
 .env.production.local
 
+# Angular build cache
+frontend/.angular/cache/
+
+# Playwright MCP runtime files
+.playwright-mcp/
+
+# Local one-off scripts and output
+tmp_*.py
+test_output.txt
+backend/test_output.txt
+
 # .NET build files
 bin/
 obj/

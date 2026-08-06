@@ -54,6 +54,11 @@ class KpiDataPoint(BaseModel):
         ge=0.0,
         le=1.0,
     )
+    discharge_volume: int | None = Field(
+        None,
+        description="Number of discharged encounters on this date/unit",
+        ge=0,
+    )
 
     model_config = {"from_attributes": True}
 
@@ -71,3 +76,54 @@ class KpiResponse(BaseModel):
     unit: str | None = Field(None, description="Unit filter applied; null means all accessible units")
     data: list[KpiDataPoint] = Field(default_factory=list)
     total_rows: int = Field(0, description="Total data points returned")
+
+
+class RiskDistributionBucket(BaseModel):
+    """A single bucket in the readmission risk distribution."""
+
+    tier: str = Field(..., description="Risk tier: LOW | MEDIUM | HIGH")
+    count: int = Field(..., ge=0, description="Number of encounters in this tier")
+    percentage: float = Field(..., ge=0.0, le=100.0, description="Percentage of total encounters")
+
+
+class RiskDistributionResponse(BaseModel):
+    """Top-level response for GET /api/v1/analytics/risk-distribution."""
+
+    from_date: datetime.date
+    to_date: datetime.date
+    unit: str | None = Field(None, description="Unit filter applied; null means all accessible units")
+    buckets: list[RiskDistributionBucket] = Field(default_factory=list)
+    total: int = Field(0, description="Total encounters represented")
+
+
+class HighRiskEncounter(BaseModel):
+    """De-identified high-risk encounter row for the analytics dashboard.
+
+    Contains no PHI — patient identifier is masked to the last 4 digits of the MRN.
+    """
+
+    masked_id: str = Field(..., description="Masked patient identifier, e.g. ●●● #2041")
+    unit: str | None = Field(None, description="Encounter unit")
+    risk_score: float | None = Field(None, ge=0.0, le=1.0, description="Predicted 30-day readmission probability")
+    risk_tier: str = Field(..., description="Risk tier: HIGH | MEDIUM | LOW")
+    discharge_date: datetime.date | None = Field(None, description="Discharge date")
+    follow_up_status: str = Field(..., description="Follow-up appointment status label")
+
+
+class HighRiskEncountersResponse(BaseModel):
+    """Top-level response for GET /api/v1/analytics/high-risk-encounters."""
+
+    from_date: datetime.date
+    to_date: datetime.date
+    unit: str | None = Field(None, description="Unit filter applied; null means all accessible units")
+    encounters: list[HighRiskEncounter] = Field(default_factory=list)
+    total: int = Field(0, description="Total high-risk encounters returned")
+
+
+class ExportJobStatus(BaseModel):
+    """Status response for async PDF export jobs."""
+
+    job_id: str = Field(..., description="Unique export job identifier")
+    status: str = Field(..., description="Job status: processing | complete | error")
+    download_url: str | None = Field(None, description="URL to download the generated file")
+    poll_url: str | None = Field(None, description="URL to poll for status updates")

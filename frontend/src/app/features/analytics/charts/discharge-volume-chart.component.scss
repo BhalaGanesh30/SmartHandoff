@@ -1,0 +1,47 @@
+:host {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+h3 {
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #4B5563;
+  margin: 0 0 16px 0;
+}
+
+.line-chart {
+  width: 100%;
+  height: 120px;
+  position: relative;
+  border-bottom: 1px solid #E5E7EB;
+
+  svg {
+    width: 100%;
+    height: 100%;
+  }
+}
+
+.line-chart-labels {
+  display: flex;
+  justify-content: space-between;
+  font-size: 10px;
+  color: #4B5563;
+  margin-top: 6px;
+
+  span {
+    position: relative;
+    transform: translateX(-50%);
+    white-space: nowrap;
+  }
+}
+
+.no-data {
+  padding: 2rem;
+  text-align: center;
+  color: #94a3b8;
+  font-style: italic;
+}

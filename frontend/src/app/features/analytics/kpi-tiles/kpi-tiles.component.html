@@ -1,0 +1,9 @@
+<div class="kpi-grid" role="list" aria-label="KPI summary tiles">
+  @for (tile of tiles; track tile.label) {
+    <div class="kpi-card" role="listitem">
+      <div class="kpi-label">{{ tile.label }}</div>
+      <div class="kpi-value">{{ tile.value }}</div>
+      <div class="kpi-trend" [ngClass]="tile.trendClass">{{ tile.trend }}</div>
+    </div>
+  }
+</div>

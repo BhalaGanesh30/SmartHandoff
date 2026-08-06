@@ -1,0 +1,109 @@
+.card {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+}
+
+.card-header {
+  padding: 14px 18px;
+  border-bottom: 1px solid #e5e7eb;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  h2 {
+    margin: 0;
+    font-size: 13px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #4b5563;
+  }
+}
+
+.table-wrap {
+  overflow-x: auto;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+thead tr {
+  background: #f3f4f6;
+}
+
+th {
+  padding: 10px 16px;
+  text-align: left;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #4b5563;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+td {
+  padding: 12px 16px;
+  font-size: 12px;
+  border-bottom: 1px solid #e5e7eb;
+  color: #111827;
+}
+
+tr:last-child td {
+  border-bottom: none;
+}
+
+tr:hover td {
+  background: #f3f4f6;
+}
+
+.risk-chip {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 9999px;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+
+  &.high {
+    background: #fef2f2;
+    color: #dc2626;
+  }
+
+  &.med {
+    background: #fffbeb;
+    color: #d97706;
+  }
+
+  &.low {
+    background: #f0fdf4;
+    color: #16a34a;
+  }
+}
+
+.booked {
+  color: #16a34a;
+  font-weight: 600;
+}
+
+.missed {
+  color: #dc2626;
+  font-weight: 600;
+}
+
+.pending {
+  color: #d97706;
+  font-weight: 600;
+}
+
+.no-data-row {
+  text-align: center;
+  color: #94a3b8;
+  font-style: italic;
+  padding: 2rem;
+}
